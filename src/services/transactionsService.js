@@ -2,17 +2,29 @@ import { api as apiClient } from '../config/axios.js'
 
 /**
  * Transactions Service
+ * Berdasarkan transactions_api.md specification
  * Provides methods for CRUD operations on transactions
  */
 class TransactionsService {
   /**
-   * Get all transactions
-   * @param {Object} params - Query parameters
+   * List Transactions (Paginated)
+   * @param {Object} params - Query parameters (count, page)
    * @returns {Promise<Object>} API response
    */
   async getAll(params = {}) {
     try {
-      const response = await apiClient.get('/transactions', { params })
+      // Default parameters sesuai API spec
+      const queryParams = {
+        count: params.count || 10, // default 10, max 100
+        page: params.page || 1,    // default 1
+        ...params
+      }
+
+      console.log('Fetching transactions with params:', queryParams)
+      
+      const response = await apiClient.get('/transactions', { params: queryParams })
+      
+      console.log('Transactions API response:', response.data)
       
       if (response.data.STATUS === 'OK') {
         const transactions = Array.isArray(response.data.DATA) ? response.data.DATA : []
@@ -20,12 +32,6 @@ class TransactionsService {
         return {
           success: true,
           data: transactions,
-          pagination: response.data.pagination || {
-            page: 1,
-            count: transactions.length,
-            total: transactions.length,
-            hasMore: false
-          },
           message: response.data.MESSAGE
         }
       } else {
@@ -36,80 +42,91 @@ class TransactionsService {
         }
       }
     } catch (error) {
-      console.error('Backend API error:', error.message)
+      console.error('Get transactions error:', error)
+      
+      if (error.response) {
+        const { status, data } = error.response
+        
+        switch (status) {
+          case 500:
+            return {
+              success: false,
+              error: data.ERROR || 'Internal server error',
+              status: 'INTERNAL_SERVER_ERROR'
+            }
+          default:
+            return {
+              success: false,
+              error: 'Failed to fetch transactions',
+              status: 'UNKNOWN_ERROR'
+            }
+        }
+      }
+      
       return {
         success: false,
-        error: 'Cannot connect to backend API: ' + error.message,
-        data: []
+        error: 'Network error or server unavailable',
+        status: 'NETWORK_ERROR'
       }
     }
   }
 
   /**
    * Get all transactions with items details
-   * Menggunakan endpoint standar /transactions dan kemudian fetch detail per transaction
+   * Menggunakan getById untuk setiap transaction untuk mendapatkan items detail
    * @param {Object} params - Query parameters
    * @returns {Promise<Object>} API response with items
    */
   async getAllWithItems(params = {}) {
     try {
       // Ambil list transactions dulu
-      const response = await apiClient.get('/transactions', { params })
+      const transactionsResponse = await this.getAll(params)
       
-      if (response.data.STATUS === 'OK') {
-        const transactions = Array.isArray(response.data.DATA) ? response.data.DATA : []
-        
-        // Untuk setiap transaction, ambil detail items jika diperlukan
-        const transactionsWithItems = await Promise.all(
-          transactions.map(async (transaction) => {
-            try {
-              const detailResponse = await this.getById(transaction.id_transaction)
-              if (detailResponse.success && detailResponse.data.items) {
-                return {
-                  ...transaction,
-                  items: detailResponse.data.items
-                }
+      if (!transactionsResponse.success) {
+        return transactionsResponse
+      }
+
+      const transactions = transactionsResponse.data
+      
+      // Untuk setiap transaction, ambil detail items
+      const transactionsWithItems = await Promise.all(
+        transactions.map(async (transaction) => {
+          try {
+            const detailResponse = await this.getById(transaction.id_transaction)
+            if (detailResponse.success && detailResponse.data.items) {
+              return {
+                ...transaction,
+                items: detailResponse.data.items
               }
-              return transaction
-            } catch (error) {
-              console.error(`Failed to fetch items for transaction ${transaction.id_transaction}:`, error)
-              return transaction
             }
-          })
-        )
-        
-        return {
-          success: true,
-          data: transactionsWithItems,
-          pagination: response.data.pagination || {
-            page: 1,
-            count: transactionsWithItems.length,
-            total: transactionsWithItems.length,
-            hasMore: false
-          },
-          message: response.data.MESSAGE
-        }
-      } else {
-        return {
-          success: false,
-          error: response.data.ERROR || 'Failed to fetch transactions',
-          status: response.data.STATUS
-        }
+            return transaction
+          } catch (error) {
+            console.error(`Failed to fetch items for transaction ${transaction.id_transaction}:`, error)
+            return transaction
+          }
+        })
+      )
+      
+      return {
+        success: true,
+        data: transactionsWithItems,
+        message: transactionsResponse.message
       }
     } catch (error) {
-      console.error('Backend API error:', error.message)
+      console.error('Get transactions with items error:', error)
       return {
         success: false,
-        error: 'Cannot connect to backend API: ' + error.message,
+        error: 'Failed to fetch transactions with items',
         data: []
       }
     }
   }
 
   /**
-   * Get transaction by ID
+   * Get Transaction by ID (with Item Details)
+   * Sesuai API spec: GET /api/transactions/:id
    * @param {string} id - Transaction UUID
-   * @returns {Promise<Object>} Transaction details response
+   * @returns {Promise<Object>} Transaction with items details response
    */
   async getById(id) {
     try {
@@ -121,9 +138,14 @@ class TransactionsService {
         }
       }
 
+      console.log(`Fetching transaction by ID: ${id}`)
+      
       const response = await apiClient.get(`/transactions/${id}`)
       
+      console.log('Transaction by ID response:', response.data)
+      
       if (response.data.STATUS === 'OK') {
+        // API mengembalikan { transaction: {...}, items: [...] }
         return {
           success: true,
           data: response.data.DATA,
@@ -167,19 +189,23 @@ class TransactionsService {
   }
 
   /**
-   * Create new transaction
+   * Create Transaction
+   * Sesuai API spec: POST /api/transactions
+   * Auth: Bearer JWT required
    * @param {Object} transactionData - Transaction data
+   * @param {string} transactionData.buyer_contact - Buyer contact (optional)  
    * @param {Array} transactionData.items - Array of items with id_item, quantity
-   * @param {string} transactionData.buyer_contact - Buyer contact (optional)
    * @returns {Promise<Object>} Create transaction response
    */
   async create(transactionData) {
     try {
+      console.log('Creating transaction with data:', transactionData)
+      
       // Validate required fields sesuai API spec
       if (!transactionData.items || !Array.isArray(transactionData.items) || transactionData.items.length === 0) {
         return {
           success: false,
-          error: 'Items are required and must be an array',
+          error: 'items required',
           status: 'BAD_REQUEST'
         }
       }
@@ -194,29 +220,31 @@ class TransactionsService {
           }
         }
         if (!item.quantity || item.quantity < 1) {
-          return {
-            success: false,
-            error: 'Each item must have quantity >= 1',
-            status: 'BAD_REQUEST'
-          }
+          // Sesuai API spec: quantity defaults to 1 if omitted or <= 0
+          item.quantity = 1
         }
       }
 
-      // Format data sesuai API spec - server akan hitung total_price
-      const data = {
+      // Format request body sesuai API spec
+      const requestBody = {
         buyer_contact: transactionData.buyer_contact || '',
         items: transactionData.items.map(item => ({
           id_item: item.id_item,
-          quantity: item.quantity
+          quantity: parseInt(item.quantity) || 1
         }))
       }
 
-      const response = await apiClient.post('/transactions', data)
+      console.log('Sending POST /transactions with body:', requestBody)
       
+      const response = await apiClient.post('/transactions', requestBody)
+      
+      console.log('Create transaction response:', response.data)
+      
+      // Sesuai API spec: response STATUS bisa 'created' untuk 201
       if (response.data.STATUS === 'created') {
         return {
           success: true,
-          data: response.data.DATA,
+          data: response.data.DATA, // berisi { transaction: {...}, items: [...] }
           message: response.data.MESSAGE
         }
       } else {
@@ -227,34 +255,40 @@ class TransactionsService {
         }
       }
     } catch (error) {
-      console.error('Backend API error (create):', error)
+      console.error('Create transaction error:', error)
       
       if (error.response) {
         const { status, data } = error.response
         
+        console.log('HTTP Error Status:', status)
+        console.log('Error Response Data:', data)
+        
         switch (status) {
           case 400:
+            // Sesuai API spec: validation errors atau invalid item
             return {
               success: false,
-              error: data.ERROR || 'Invalid transaction data',
+              error: data.ERROR || 'items required',
               status: 'BAD_REQUEST'
             }
           case 401:
+            // Sesuai API spec: unauthorized
             return {
               success: false,
-              error: 'Authentication required',
+              error: 'UNAUTHORIZED - JWT token required',
               status: 'UNAUTHORIZED'
             }
           case 500:
+            // Sesuai API spec: internal server error
             return {
               success: false,
-              error: data.ERROR || 'Failed to create transaction on backend',
+              error: data.ERROR || 'failed to create transaction',
               status: 'INTERNAL_SERVER_ERROR'
             }
           default:
             return {
               success: false,
-              error: 'Failed to create transaction on backend',
+              error: 'Failed to create transaction',
               status: 'UNKNOWN_ERROR'
             }
         }
@@ -262,16 +296,20 @@ class TransactionsService {
       
       return {
         success: false,
-        error: 'Cannot connect to backend API: ' + error.message,
+        error: 'Network error or server unavailable: ' + error.message,
         status: 'NETWORK_ERROR'
       }
     }
   }
 
   /**
-   * Update existing transaction
+   * Update Transaction
+   * Sesuai API spec: PUT /api/transactions/:id
+   * Auth: Bearer JWT required
+   * Currently only buyer_contact dapat diupdate
    * @param {string} id - Transaction UUID
    * @param {Object} transactionData - Updated transaction data
+   * @param {string} transactionData.buyer_contact - Updated buyer contact
    * @returns {Promise<Object>} Update transaction response
    */
   async update(id, transactionData) {
@@ -284,7 +322,16 @@ class TransactionsService {
         }
       }
 
-      const response = await apiClient.put(`/transactions/${id}`, transactionData)
+      // Sesuai API spec: hanya buyer_contact yang bisa diupdate
+      const updateData = {
+        buyer_contact: transactionData.buyer_contact || ''
+      }
+
+      console.log(`Updating transaction ${id} with data:`, updateData)
+
+      const response = await apiClient.put(`/transactions/${id}`, updateData)
+      
+      console.log('Update transaction response:', response.data)
       
       if (response.data.STATUS === 'updated') {
         return {
@@ -307,27 +354,31 @@ class TransactionsService {
         
         switch (status) {
           case 400:
+            // Sesuai API spec: validation error
             return {
               success: false,
-              error: data.ERROR || 'Invalid transaction data',
+              error: data.ERROR || 'validation error message',
               status: 'BAD_REQUEST'
             }
           case 401:
+            // Sesuai API spec: unauthorized
             return {
               success: false,
-              error: 'Authentication required',
+              error: 'UNAUTHORIZED',
               status: 'UNAUTHORIZED'
             }
           case 404:
+            // Sesuai API spec: transaction not found
             return {
               success: false,
-              error: data.MESSAGE || 'Transaction not found',
+              error: data.MESSAGE || 'transaction not found',
               status: 'NOT_FOUND'
             }
           case 500:
+            // Sesuai API spec: internal server error
             return {
               success: false,
-              error: data.ERROR || 'Failed to update transaction',
+              error: data.ERROR || 'failed to update transaction',
               status: 'INTERNAL_SERVER_ERROR'
             }
           default:
@@ -348,7 +399,10 @@ class TransactionsService {
   }
 
   /**
-   * Delete transaction
+   * Delete Transaction (Soft Delete)
+   * Sesuai API spec: DELETE /api/transactions/:id
+   * Auth: Bearer JWT required
+   * Sets is_deleted = true untuk transaction dan items
    * @param {string} id - Transaction UUID
    * @returns {Promise<Object>} Delete transaction response
    */
@@ -362,12 +416,16 @@ class TransactionsService {
         }
       }
 
+      console.log(`Soft deleting transaction: ${id}`)
+
       const response = await apiClient.delete(`/transactions/${id}`)
+      
+      console.log('Delete transaction response:', response.data)
       
       if (response.data.STATUS === 'deleted') {
         return {
           success: true,
-          data: response.data.DATA,
+          data: response.data.DATA, // berisi { id: "transaction-id" }
           message: response.data.MESSAGE
         }
       } else {

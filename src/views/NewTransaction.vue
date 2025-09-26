@@ -497,8 +497,38 @@ const processPayment = async () => {
 
   // Check authentication before proceeding
   const token = localStorage.getItem('auth_token')
+  console.log('Auth token check:', token ? 'Token found' : 'No token')
+  
   if (!token) {
     alert('Anda harus login terlebih dahulu untuk memproses transaksi.')
+    router.push('/login')
+    return
+  }
+
+  // Additional token validation
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    const currentTime = Math.floor(Date.now() / 1000)
+    const isExpired = payload.exp <= currentTime
+    
+    console.log('Token validation:', {
+      exp: payload.exp,
+      currentTime: currentTime,
+      isExpired: isExpired
+    })
+    
+    if (isExpired) {
+      alert('Sesi Anda telah berakhir. Silakan login kembali.')
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user_data')
+      router.push('/login')
+      return
+    }
+  } catch (error) {
+    console.error('Token parsing error:', error)
+    alert('Token tidak valid. Silakan login kembali.')
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('user_data')
     router.push('/login')
     return
   }
@@ -516,9 +546,13 @@ const processPayment = async () => {
     }
     
     console.log('Transaction data:', transactionData)
+    console.log('Request headers will include:', { Authorization: `Bearer ${token.substring(0, 20)}...` })
+    console.log('Cart items before mapping:', cart.value)
     
     // Create transaction via API
     const result = await createTransaction(transactionData)
+    
+    console.log('Transaction result:', result)
     
     if (result) {
       console.log('Transaction created successfully', result)
