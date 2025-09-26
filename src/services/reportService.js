@@ -11,23 +11,52 @@ class ReportService {
    */
   async getTodayReport() {
     try {
+      console.log('Fetching today report from /reports/today')
+      
       const response = await apiClient.get('/reports/today')
       
+      console.log('Today report API response:', response.data)
+      
       if (response.data.STATUS === 'OK') {
+        console.log('Today report data received:', response.data.DATA)
         return {
           success: true,
           data: response.data.DATA,
           message: response.data.MESSAGE
         }
       } else {
+        console.error('Today report API error:', response.data)
         return {
           success: false,
-          error: response.data.ERROR || 'Failed to fetch today report',
+          error: response.data.MESSAGE || response.data.ERROR || 'Failed to fetch today report',
           status: response.data.STATUS
         }
       }
     } catch (error) {
-      console.error('Backend API error (today report):', error.message)
+      console.error('Backend API error (today report):', error)
+      
+      if (error.response) {
+        console.error('Error response:', error.response.data)
+        console.error('Error status:', error.response.status)
+        
+        const { status, data } = error.response
+        
+        switch (status) {
+          case 500:
+            return {
+              success: false,
+              error: data.ERROR || 'Internal server error',
+              status: 'INTERNAL_SERVER_ERROR'
+            }
+          default:
+            return {
+              success: false,
+              error: 'Failed to fetch today report',
+              status: 'UNKNOWN_ERROR'
+            }
+        }
+      }
+      
       return {
         success: false,
         error: 'Cannot connect to backend API: ' + error.message,

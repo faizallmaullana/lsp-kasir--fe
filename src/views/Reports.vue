@@ -41,12 +41,12 @@
         </div>
 
         <!-- Today Statistics -->
-        <div v-if="todayStats" class="stats-grid">
+        <div v-if="todayReport" class="stats-grid">
           <div class="stat-card">
             <div class="stat-content">
               <div class="stat-info">
                 <p class="stat-label">Total Transaksi</p>
-                <p class="stat-value">{{ todayStats.totalTransactions }}</p>
+                <p class="stat-value">{{ todayReport.total_transactions }}</p>
               </div>
               <div class="stat-icon blue">
                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,7 +60,7 @@
             <div class="stat-content">
               <div class="stat-info">
                 <p class="stat-label">Total Pendapatan</p>
-                <p class="stat-value green">Rp {{ formatCurrency(todayStats.totalRevenue) }}</p>
+                <p class="stat-value green">Rp {{ formatCurrency(todayReport.sum_total_price) }}</p>
               </div>
               <div class="stat-icon green">
                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,13 +73,91 @@
           <div class="stat-card">
             <div class="stat-content">
               <div class="stat-info">
-                <p class="stat-label">Total Item Terjual</p>
-                <p class="stat-value purple">{{ todayStats.totalItemsSold }}</p>
+                <p class="stat-label">Rata-rata per Transaksi</p>
+                <p class="stat-value orange">Rp {{ formatCurrency(todayReport.average_order_value) }}</p>
+              </div>
+              <div class="stat-icon orange">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-content">
+              <div class="stat-info">
+                <p class="stat-label">Transaksi Tertinggi</p>
+                <p class="stat-value purple">Rp {{ formatCurrency(todayReport.max_order_value) }}</p>
               </div>
               <div class="stat-icon purple">
                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-content">
+              <div class="stat-info">
+                <p class="stat-label">Transaksi Terendah</p>
+                <p class="stat-value gray">Rp {{ formatCurrency(todayReport.min_order_value) }}</p>
+              </div>
+              <div class="stat-icon gray">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-content">
+              <div class="stat-info">
+                <p class="stat-label">Rata-rata Item per Transaksi</p>
+                <p class="stat-value teal">{{ todayReport.average_items_per_transaction }}</p>
+              </div>
+              <div class="stat-icon teal">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
                 </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Items Today -->
+        <div v-if="todayReport && todayReport.top_items && todayReport.top_items.length > 0" class="top-items-container">
+          <div class="top-items-header">
+            <h3 class="top-items-title">Produk Terlaris Hari Ini</h3>
+          </div>
+          <div class="top-items-grid">
+            <div 
+              v-for="(item, index) in todayReport.top_items" 
+              :key="item.id_item" 
+              class="top-item-card"
+            >
+              <div class="top-item-rank">{{ index + 1 }}</div>
+              <div class="top-item-image">
+                <img 
+                  v-if="item.image_url" 
+                  :src="item.image_url" 
+                  :alt="item.item_name"
+                  class="item-image"
+                />
+                <div v-else class="item-placeholder">
+                  <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                  </svg>
+                </div>
+              </div>
+              <div class="top-item-info">
+                <h4 class="top-item-name">{{ item.item_name }}</h4>
+                <div class="top-item-stats">
+                  <span class="quantity-sold">Terjual: {{ item.quantity_sold }}</span>
+                  <span class="revenue">Pendapatan: Rp {{ formatCurrency(item.revenue) }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -171,12 +249,17 @@
         </div>
 
         <!-- Monthly Statistics -->
-        <div v-if="monthlyStats" class="stats-grid">
+        <div v-if="monthlyReport" class="stats-grid">
           <div class="stat-card">
             <div class="stat-content">
               <div class="stat-info">
                 <p class="stat-label">Total Transaksi</p>
-                <p class="stat-value">{{ monthlyStats.totalTransactions }}</p>
+                <p class="stat-value">{{ monthlyReport.total_transactions }}</p>
+              </div>
+              <div class="stat-icon blue">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
             </div>
           </div>
@@ -184,15 +267,61 @@
             <div class="stat-content">
               <div class="stat-info">
                 <p class="stat-label">Total Pendapatan</p>
-                <p class="stat-value green">Rp {{ formatCurrency(monthlyStats.totalRevenue) }}</p>
+                <p class="stat-value green">Rp {{ formatCurrency(monthlyReport.sum_total_price) }}</p>
+              </div>
+              <div class="stat-icon green">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
               </div>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-content">
               <div class="stat-info">
-                <p class="stat-label">Total Item Terjual</p>
-                <p class="stat-value purple">{{ monthlyStats.totalItemsSold }}</p>
+                <p class="stat-label">Rata-rata per Transaksi</p>
+                <p class="stat-value orange">Rp {{ formatCurrency(monthlyReport.average_order_value) }}</p>
+              </div>
+              <div class="stat-icon orange">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Items Monthly -->
+        <div v-if="monthlyReport && monthlyReport.top_items && monthlyReport.top_items.length > 0" class="top-items-container">
+          <div class="top-items-header">
+            <h3 class="top-items-title">Produk Terlaris Bulan {{ getMonthName(monthlyFilters.month) }} {{ monthlyFilters.year }}</h3>
+          </div>
+          <div class="top-items-grid">
+            <div 
+              v-for="(item, index) in monthlyReport.top_items" 
+              :key="item.id_item" 
+              class="top-item-card"
+            >
+              <div class="top-item-rank">{{ index + 1 }}</div>
+              <div class="top-item-image">
+                <img 
+                  v-if="item.image_url" 
+                  :src="item.image_url" 
+                  :alt="item.item_name"
+                  class="item-image"
+                />
+                <div v-else class="item-placeholder">
+                  <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                  </svg>
+                </div>
+              </div>
+              <div class="top-item-info">
+                <h4 class="top-item-name">{{ item.item_name }}</h4>
+                <div class="top-item-stats">
+                  <span class="quantity-sold">Terjual: {{ item.quantity_sold }}</span>
+                  <span class="revenue">Pendapatan: Rp {{ formatCurrency(item.revenue) }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -275,12 +404,17 @@
         </div>
 
         <!-- Daily Statistics -->
-        <div v-if="dailyStats" class="stats-grid">
+        <div v-if="dailyReport" class="stats-grid">
           <div class="stat-card">
             <div class="stat-content">
               <div class="stat-info">
                 <p class="stat-label">Total Transaksi</p>
-                <p class="stat-value">{{ dailyStats.totalTransactions }}</p>
+                <p class="stat-value">{{ dailyReport.total_transactions }}</p>
+              </div>
+              <div class="stat-icon blue">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
             </div>
           </div>
@@ -288,15 +422,61 @@
             <div class="stat-content">
               <div class="stat-info">
                 <p class="stat-label">Total Pendapatan</p>
-                <p class="stat-value green">Rp {{ formatCurrency(dailyStats.totalRevenue) }}</p>
+                <p class="stat-value green">Rp {{ formatCurrency(dailyReport.sum_total_price) }}</p>
+              </div>
+              <div class="stat-icon green">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                </svg>
               </div>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-content">
               <div class="stat-info">
-                <p class="stat-label">Total Item Terjual</p>
-                <p class="stat-value purple">{{ dailyStats.totalItemsSold }}</p>
+                <p class="stat-label">Rata-rata per Transaksi</p>
+                <p class="stat-value orange">Rp {{ formatCurrency(dailyReport.average_order_value) }}</p>
+              </div>
+              <div class="stat-icon orange">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Items Daily -->
+        <div v-if="dailyReport && dailyReport.top_items && dailyReport.top_items.length > 0" class="top-items-container">
+          <div class="top-items-header">
+            <h3 class="top-items-title">Produk Terlaris {{ formatDate(dailyFilters.date) }}</h3>
+          </div>
+          <div class="top-items-grid">
+            <div 
+              v-for="(item, index) in dailyReport.top_items" 
+              :key="item.id_item" 
+              class="top-item-card"
+            >
+              <div class="top-item-rank">{{ index + 1 }}</div>
+              <div class="top-item-image">
+                <img 
+                  v-if="item.image_url" 
+                  :src="item.image_url" 
+                  :alt="item.item_name"
+                  class="item-image"
+                />
+                <div v-else class="item-placeholder">
+                  <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10" />
+                  </svg>
+                </div>
+              </div>
+              <div class="top-item-info">
+                <h4 class="top-item-name">{{ item.item_name }}</h4>
+                <div class="top-item-stats">
+                  <span class="quantity-sold">Terjual: {{ item.quantity_sold }}</span>
+                  <span class="revenue">Pendapatan: Rp {{ formatCurrency(item.revenue) }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -710,6 +890,18 @@ onMounted(() => {
   color: #7c3aed;
 }
 
+.stat-value.orange {
+  color: #ea580c;
+}
+
+.stat-value.gray {
+  color: #6b7280;
+}
+
+.stat-value.teal {
+  color: #0d9488;
+}
+
 .stat-icon {
   padding: 0.75rem;
   border-radius: 50%;
@@ -729,6 +921,21 @@ onMounted(() => {
 .stat-icon.purple {
   background-color: #ede9fe;
   color: #7c3aed;
+}
+
+.stat-icon.orange {
+  background-color: #fed7aa;
+  color: #ea580c;
+}
+
+.stat-icon.gray {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+
+.stat-icon.teal {
+  background-color: #ccfbf1;
+  color: #0d9488;
 }
 
 /* Table Styles */
@@ -865,6 +1072,128 @@ onMounted(() => {
   margin: 0;
   font-size: 0.75rem;
   color: #9ca3af;
+}
+
+/* Top Items Styles */
+.top-items-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.top-items-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.top-items-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.top-items-grid {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.top-item-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  transition: all 0.2s;
+}
+
+.top-item-card:hover {
+  background: #f3f4f6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.top-item-rank {
+  width: 2rem;
+  height: 2rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.top-item-image {
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+}
+
+.item-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.item-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+}
+
+.top-item-info {
+  flex: 1;
+}
+
+.top-item-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.top-item-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.quantity-sold {
+  font-size: 0.875rem;
+  color: #059669;
+  font-weight: 500;
+}
+
+.revenue {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .top-item-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .top-item-stats {
+    align-items: center;
+  }
 }
 
 /* Responsive */

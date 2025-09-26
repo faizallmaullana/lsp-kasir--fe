@@ -12,14 +12,50 @@ export const useReports = () => {
     loading.value = true
     error.value = null
     try {
+      console.log('Loading today report...')
+      
       const response = await reportService.getTodayReport()
+      
+      console.log('Today report response:', response)
+      
       if (response.success) {
         todayReport.value = response.data
+        console.log('Today report loaded successfully:', response.data)
       } else {
+        console.error('Failed to load today report:', response.error)
         error.value = response.error || 'Gagal memuat laporan hari ini'
+        
+        // Set default empty data structure sesuai API spec
+        todayReport.value = {
+          date: new Date().toISOString().split('T')[0],
+          total_transactions: 0,
+          sum_total_price: 0,
+          total_products_sold: 0,
+          average_order_value: 0,
+          min_order_value: 0,
+          max_order_value: 0,
+          average_items_per_transaction: 0,
+          top_items: [],
+          transactions: []
+        }
       }
     } catch (err) {
+      console.error('Error loading today report:', err)
       error.value = err.message || 'Gagal memuat laporan hari ini'
+      
+      // Set default empty data structure
+      todayReport.value = {
+        date: new Date().toISOString().split('T')[0],
+        total_transactions: 0,
+        sum_total_price: 0,
+        total_products_sold: 0,
+        average_order_value: 0,
+        min_order_value: 0,
+        max_order_value: 0,
+        average_items_per_transaction: 0,
+        top_items: [],
+        transactions: []
+      }
     } finally {
       loading.value = false
     }
