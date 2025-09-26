@@ -87,25 +87,41 @@ class TransactionsService {
       }
 
       const transactions = transactionsResponse.data
+      console.log('Base transactions list:', transactions)
       
       // Untuk setiap transaction, ambil detail items
       const transactionsWithItems = await Promise.all(
         transactions.map(async (transaction) => {
           try {
-            const detailResponse = await this.getById(transaction.id_transaction)
-            if (detailResponse.success && detailResponse.data.items) {
+            const transactionId = transaction.id_transaction || transaction.id
+            console.log(`Fetching details for transaction: ${transactionId}`)
+            
+            const detailResponse = await this.getById(transactionId)
+            console.log(`Detail response for ${transactionId}:`, detailResponse)
+            
+            if (detailResponse.success && detailResponse.data) {
+              // API mengembalikan { transaction: {...}, items: [...] }
               return {
-                ...transaction,
-                items: detailResponse.data.items
+                transaction: detailResponse.data.transaction || transaction,
+                items: detailResponse.data.items || []
               }
             }
-            return transaction
+            // Jika gagal ambil detail, kembalikan transaction dengan items kosong
+            return {
+              transaction: transaction,
+              items: []
+            }
           } catch (error) {
-            console.error(`Failed to fetch items for transaction ${transaction.id_transaction}:`, error)
-            return transaction
+            console.error(`Failed to fetch items for transaction ${transaction.id_transaction || transaction.id}:`, error)
+            return {
+              transaction: transaction,
+              items: []
+            }
           }
         })
       )
+      
+      console.log('Transactions with items:', transactionsWithItems)
       
       return {
         success: true,

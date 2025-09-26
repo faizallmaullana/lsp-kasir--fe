@@ -12,15 +12,61 @@ export const useTransactions = () => {
     try {
       const response = await transactionsService.getAllWithItems()
       if (response.success) {
-        transactions.value = response.data || []
+        // Map API response to component expected format
+        const mappedTransactions = (response.data || []).map(transactionData => {
+          // Jika data dari getById (memiliki transaction dan items property)
+          if (transactionData.transaction && transactionData.items) {
+            return {
+              id: transactionData.transaction.id_transaction,
+              id_transaction: transactionData.transaction.id_transaction,
+              buyer_contact: transactionData.transaction.buyer_contact || '',
+              total_amount: transactionData.transaction.total_price || 0,
+              transaction_date: transactionData.transaction.timestamp,
+              status: transactionData.transaction.is_deleted ? 'cancelled' : 'completed',
+              user: { username: 'Admin' }, // Default user info
+              transaction_items: (transactionData.items || []).map(item => ({
+                id: item.id_item,
+                quantity: item.quantity,
+                price: item.price,
+                item: {
+                  id: item.id_item,
+                  name: item.item_name,
+                  image_url: item.image_url
+                }
+              }))
+            }
+          }
+          // Jika data dari getAll (struktur langsung transaction)
+          else {
+            return {
+              id: transactionData.id_transaction || transactionData.id,
+              id_transaction: transactionData.id_transaction || transactionData.id,
+              buyer_contact: transactionData.buyer_contact || '',
+              total_amount: transactionData.total_price || transactionData.total_amount || 0,
+              transaction_date: transactionData.timestamp || transactionData.transaction_date,
+              status: transactionData.is_deleted ? 'cancelled' : 'completed',
+              user: { username: 'Admin' },
+              transaction_items: transactionData.items || []
+            }
+          }
+        })
+        
+        console.log('Mapped transactions:', mappedTransactions)
+        transactions.value = mappedTransactions
       } else {
         error.value = response.error || 'Gagal memuat data transaksi'
       }
     } catch (err) {
+      console.error('Load transactions error:', err)
       error.value = err.message || 'Gagal memuat data transaksi'
     } finally {
       loading.value = false
     }
+  }
+
+  // Alias for loadTransactions to match component usage
+  const getAllTransactions = async () => {
+    return await loadTransactions()
   }
 
   const createTransaction = async (transactionData) => {
@@ -84,6 +130,7 @@ export const useTransactions = () => {
     loading,
     error,
     loadTransactions,
+    getAllTransactions,
     createTransaction,
     getTransactionById,
     totalTransactions,
