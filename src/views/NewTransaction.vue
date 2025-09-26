@@ -57,7 +57,12 @@
               :class="{ 'out-of-stock': !item.is_available }"
             >
               <div class="product-image">
-                <img :src="item.image_url || 'https://via.placeholder.com/150x120/3b82f6/ffffff?text=No+Image'" :alt="item.item_name" />
+                <img 
+                  :src="getProductImageSrc(item)" 
+                  :alt="item.item_name"
+                  @error="handleKasirImageError($event, item)"
+                  loading="lazy"
+                />
                 <div v-if="!item.is_available" class="out-of-stock-badge">
                   Tidak Tersedia
                 </div>
@@ -100,6 +105,14 @@
                 :key="item.id_item"
                 class="cart-item"
               >
+                <div class="cart-item-image">
+                  <img 
+                    :src="getProductImageSrc(item)" 
+                    :alt="item.item_name"
+                    @error="handleKasirImageError($event, item)"
+                    loading="lazy"
+                  />
+                </div>
                 <div class="item-info">
                   <h4>{{ item.item_name }}</h4>
                   <p class="item-price">Rp {{ formatPrice(item.price) }}</p>
@@ -320,6 +333,7 @@ import { useRouter } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import { useCart, useTransactions } from '../composables/useTransactions.js'
 import { useItems } from '../composables/useItems.js'
+import imagesService from '../services/imagesService.js'
 
 const router = useRouter()
 
@@ -348,6 +362,60 @@ const showSuccessModal = ref(false)
 const paidAmount = ref(0)
 const transactionId = ref('')
 const buyerContact = ref('')
+
+// Image URL cache for efficient loading in kasir
+const imageUrlCache = ref(new Map())
+
+// Get image base URL from environment variable
+const getImageBaseUrl = () => {
+  return import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000/api/images/file'
+}
+
+// Function to get image src for kasir product display
+const getProductImageSrc = (item) => {
+  const itemId = item.id_item || item.id
+  const imageBaseUrl = getImageBaseUrl()
+  
+  console.log(`🖼️ [Kasir Item ${itemId}] Processing image for: ${item.item_name}`)
+  
+  // Priority 1: Check for image filename field (UUID filename)
+  if (item.image) {
+    const fullImageUrl = `${imageBaseUrl}/${item.image}`
+    console.log(`🖼️ [Kasir Item ${itemId}] Using image field (${item.image}): ${fullImageUrl}`)
+    return fullImageUrl
+  }
+  
+  // Priority 2: Check for image_filename field (UUID filename)
+  if (item.image_filename) {
+    const fullImageUrl = `${imageBaseUrl}/${item.image_filename}`
+    console.log(`🖼️ [Kasir Item ${itemId}] Using image_filename field (${item.image_filename}): ${fullImageUrl}`)
+    return fullImageUrl
+  }
+  
+  // Priority 3: If item has direct image_url, use it with base URL if it's a relative path
+  if (item.image_url) {
+    if (item.image_url.startsWith('http')) {
+      console.log(`🖼️ [Kasir Item ${itemId}] Using direct HTTP image_url: ${item.image_url}`)
+      return item.image_url
+    }
+    const baseUrl = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000'
+    const fullUrl = `${baseUrl}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`
+    console.log(`🖼️ [Kasir Item ${itemId}] Constructed URL from relative image_url: ${fullUrl}`)
+    return fullUrl
+  }
+  
+  // Fallback: Generate URL from item name (for testing - should not be used in production)
+  console.warn(`🖼️ [Kasir Item ${itemId}] No image filename found for: ${item.item_name}`)
+  const fallbackUrl = 'https://via.placeholder.com/150x120/3b82f6/ffffff?text=' + encodeURIComponent(item.item_name?.substring(0, 10) || 'No+Image')
+  console.log(`🖼️ [Kasir Item ${itemId}] Using fallback placeholder: ${fallbackUrl}`)
+  return fallbackUrl
+}
+
+// Handle image load errors in kasir
+const handleKasirImageError = (event, item) => {
+  console.warn('Failed to load image for kasir item:', item.id_item || item.id, event.target.src)
+  event.target.src = 'https://via.placeholder.com/150x120/ff6b6b/ffffff?text=Error'
+}
 const taxRate = 0 // No tax for now, keep it simple
 
 // Available categories computed from actual items
@@ -908,13 +976,27 @@ onMounted(async () => {
 
 .cart-item {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: 3rem 1fr auto auto auto;
   gap: 1rem;
   align-items: center;
   padding: 1rem;
   border: 1px solid #f1f5f9;
   border-radius: 0.5rem;
   margin-bottom: 0.75rem;
+}
+
+.cart-item-image {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.375rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.cart-item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .item-info h4 {
@@ -1394,6 +1476,12 @@ onMounted(async () => {
     grid-template-columns: 1fr;
     gap: 0.75rem;
     text-align: center;
+  }
+
+  .cart-item-image {
+    width: 4rem;
+    height: 4rem;
+    margin: 0 auto;
   }
   
   .quick-amounts {

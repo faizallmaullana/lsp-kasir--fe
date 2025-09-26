@@ -6,6 +6,8 @@ import ItemDetail from '../views/ItemDetail.vue'
 import NewTransaction from '../views/NewTransaction.vue'
 import Transactions from '../views/Transactions.vue'
 import Reports from '../views/Reports.vue'
+import Kasir from '../views/Kasir.vue'
+import Profile from '../views/ProfileView.vue'
 import authService from '../services/authService.js'
 
 const router = createRouter({
@@ -52,6 +54,15 @@ const router = createRouter({
       }
     },
     {
+      path: '/kasir',
+      name: 'Kasir',
+      component: Kasir,
+      meta: {
+        requiresAuth: true,
+        title: 'Manajemen Kasir'
+      }
+    },
+    {
       path: '/pos',
       name: 'NewTransaction',
       component: NewTransaction,
@@ -76,6 +87,15 @@ const router = createRouter({
       meta: {
         requiresAuth: true,
         title: 'Laporan'
+      }
+    },
+    {
+      path: '/profile',
+      name: 'Profile',
+      component: Profile,
+      meta: {
+        requiresAuth: true,
+        title: 'Profil Saya'
       }
     }
   ],
