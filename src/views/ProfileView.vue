@@ -26,7 +26,7 @@
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M10 5v10m-5-5h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            Tambah Profil
+            Tambah User & Profil
           </button>
         </div>
       </div>
@@ -140,11 +140,93 @@
           </div>
         </div>
 
+        <!-- Users List (All Users) -->
+        <div class="profiles-section">
+          <div class="section-header">
+            <div class="section-header-content">
+              <div>
+                <h2>Daftar Semua User</h2>
+                <p>{{ isAdmin ? 'Kelola seluruh user dalam sistem (Akses Admin)' : 'Daftar seluruh user dalam sistem' }}</p>
+              </div>
+              <button @click="handleLoadAllUsers" class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke="currentColor" stroke-width="2" fill="none"/>
+                </svg>
+                {{ isAdmin ? 'Refresh Users (Admin)' : 'Refresh' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Users Loading -->
+          <div v-if="loading" class="users-loading">
+            <div class="spinner"></div>
+            <p>Memuat daftar user...</p>
+          </div>
+
+          <!-- Users Empty State -->
+          <div v-else-if="!hasUsers" class="empty-state">
+            <div class="empty-icon">
+              <svg width="64" height="64" viewBox="0 0 20 20" fill="none">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" fill="currentColor"/>
+              </svg>
+            </div>
+            <h3>Belum ada user</h3>
+            <p>Belum ada user lain dalam sistem. Tambahkan user pertama untuk memulai.</p>
+            <button @click="showAddUserModal = true" class="btn btn-primary">
+              Tambah User Pertama
+            </button>
+          </div>
+
+          <!-- Users Grid -->
+          <div v-else class="users-grid">
+            <div 
+              v-for="user in users" 
+              :key="user.id_user || user.id" 
+              class="user-card"
+            >
+              <div class="user-card-header">
+                <div class="user-avatar">
+                  <svg width="32" height="32" viewBox="0 0 20 20" fill="none">
+                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" fill="currentColor"/>
+                  </svg>
+                </div>
+                <div class="user-role-badge" :class="user.role?.toLowerCase() || 'user'">
+                  {{ user.role || 'USER' }}
+                </div>
+              </div>
+              
+              <div class="user-card-content">
+                <h3 class="user-email">{{ user.email }}</h3>
+                <div class="user-info">
+                  <div class="info-item">
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" fill="currentColor"/>
+                    </svg>
+                    <span>ID: {{ user.id_user || user.id || '-' }}</span>
+                  </div>
+                  <div class="info-item">
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                      <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" fill="currentColor"/>
+                    </svg>
+                    <span>Status: {{ user.is_deleted ? 'Tidak Aktif' : 'Aktif' }}</span>
+                  </div>
+                  <div v-if="user.timestamp" class="info-item">
+                    <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                      <path d="M8 7V3a1 1 0 012 0v4a1 1 0 01-2 0zM16 7V3a1 1 0 012 0v4a1 1 0 01-2 0zM6 11h8v6H6v-6zM4 5h12v14H4V5z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                    </svg>
+                    <span>Dibuat: {{ formatDate(user.timestamp) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Profiles List -->
         <div class="profiles-section">
           <div class="section-header">
-            <h2>Daftar Profil</h2>
-            <p>Kelola profil yang terkait dengan akun Anda</p>
+            <h2>{{ isAdmin ? 'Profil Saya' : 'Daftar Profil' }}</h2>
+            <p>{{ isAdmin ? 'Kelola profil akun admin Anda' : 'Kelola profil yang terkait dengan akun Anda' }}</p>
           </div>
 
           <!-- Empty State -->
@@ -157,7 +239,7 @@
             <h3>Belum ada profil</h3>
             <p>Anda belum memiliki profil. Buat profil pertama untuk melengkapi informasi akun.</p>
             <button @click="showAddProfileModal = true" class="btn btn-primary">
-              Buat Profil Pertama
+              Buat User & Profil Pertama
             </button>
           </div>
 
@@ -235,7 +317,7 @@
     <div v-if="showAddProfileModal" class="modal-overlay" @click.self="closeAddProfileModal">
       <div class="modal-content">
         <div class="modal-header">
-          <h2>Tambah Profil Baru</h2>
+          <h2>Tambah User & Profil Baru</h2>
           <button @click="closeAddProfileModal" class="close-btn">
             <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
               <path d="M15 5L5 15m0-10l10 10" stroke="currentColor" stroke-width="2"/>
@@ -244,6 +326,36 @@
         </div>
         
         <form @submit.prevent="handleCreateProfile" class="modal-body">
+          <div class="form-group">
+            <label for="add-email">Email *</label>
+            <input
+              id="add-email"
+              type="email"
+              v-model="profileForm.formData.email"
+              :class="['form-input', { 'error': profileForm.errors.email }]"
+              placeholder="Masukkan email"
+              @blur="profileForm.validateEmail(profileForm.formData.email)"
+            />
+            <span v-if="profileForm.errors.email" class="error-text">
+              {{ profileForm.errors.email }}
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="add-password">Password *</label>
+            <input
+              id="add-password"
+              type="password"
+              v-model="profileForm.formData.password"
+              :class="['form-input', { 'error': profileForm.errors.password }]"
+              placeholder="Minimal 6 karakter"
+              @blur="profileForm.validatePassword(profileForm.formData.password)"
+            />
+            <span v-if="profileForm.errors.password" class="error-text">
+              {{ profileForm.errors.password }}
+            </span>
+          </div>
+
           <div class="form-group">
             <label for="add-name">Nama Lengkap *</label>
             <input
@@ -311,10 +423,9 @@
             <button 
               type="submit" 
               class="btn btn-primary"
-              :disabled="profileForm.isSubmitting || !profileForm.isValid"
+              :disabled="!profileForm.isValid"
             >
-              <span v-if="profileForm.isSubmitting" class="loading-spinner"></span>
-              {{ profileForm.isSubmitting ? 'Menyimpan...' : 'Simpan Profil' }}
+              Simpan User & Profil
             </button>
           </div>
         </form>
@@ -667,16 +778,20 @@ import AppLayout from '../components/AppLayout.vue'
 const {
   currentUser,
   profiles,
+  users,
   loading,
   error,
   loadingProfileId,
   totalProfiles,
   hasProfiles,
+  totalUsers,
+  hasUsers,
   userRole,
   userEmail,
   isAdmin,
   isCashier,
   loadCurrentUser,
+  loadAllUsers,
   createProfile,
   updateProfile,
   deleteProfile,
@@ -703,7 +818,30 @@ const profileToDelete = ref(null)
 
 // Load data on component mount
 onMounted(async () => {
+  console.log('ProfileView mounting, loading current user...')
   await loadCurrentUser()
+  console.log('Current user loaded:', currentUser.value)
+  console.log('User role:', userRole.value)
+  console.log('Is Admin?', isAdmin.value)
+  console.log('Profiles loaded:', profiles.value)
+  
+  // Debug admin access
+  debugAdminAccess()
+  
+  // Load all users for all logged in users
+  console.log('🚀 Loading all users...')
+  if (isAdmin.value) {
+    console.log('🔑 Admin access detected - loading all users with admin privileges')
+  } else {
+    console.log('👤 Regular user - loading all users')
+  }
+  
+  console.log('📡 Making API request to GET /api/users...')
+  await loadAllUsers()
+  console.log('✅ Users API request completed')
+  console.log('📋 Users data:', users.value)
+  console.log('📊 Total users:', totalUsers.value)
+  console.log('🔍 Has users:', hasUsers.value)
 })
 
 // Profile image handling
@@ -778,23 +916,54 @@ const handleCreateUser = async () => {
 
 // Profile handlers
 const handleCreateProfile = async () => {
+  console.log('Form validation result:', profileForm.validateForm())
+  console.log('Form isValid:', profileForm.isValid)
+  console.log('Form data:', profileForm.formData)
+  console.log('Form errors:', profileForm.errors)
+  
   if (!profileForm.validateForm()) {
+    console.log('Form validation failed, stopping submission')
     return
   }
 
-  profileForm.isSubmitting.value = true
-  
   try {
-    const success = await createProfile(profileForm.getFormData())
-    if (success) {
-      closeAddProfileModal()
-      // Show success notification (you can implement a notification system)
-      console.log('Profil berhasil dibuat')
+    const formData = profileForm.getFormData()
+    
+    // If email and password are provided, create user with profile
+    if (formData.email && formData.password) {
+      const userData = {
+        email: formData.email,
+        password: formData.password,
+        role: 'cashier', // default role for regular profile creation
+        profile: {
+          name: formData.name,
+          contact: formData.contact,
+          address: formData.address,
+          image_url: formData.image_url
+        }
+      }
+      const success = await createUser(userData)
+      if (success) {
+        closeAddProfileModal()
+        // Reload data to show new profile
+        await loadCurrentUser()
+        console.log('User dengan profil berhasil dibuat')
+      }
+    } else {
+      // Otherwise, just create profile
+      const success = await createProfile({
+        name: formData.name,
+        contact: formData.contact,
+        address: formData.address,
+        image_url: formData.image_url
+      })
+      if (success) {
+        closeAddProfileModal()
+        console.log('Profil berhasil dibuat')
+      }
     }
   } catch (error) {
     console.error('Error creating profile:', error)
-  } finally {
-    profileForm.isSubmitting.value = false
   }
 }
 
@@ -865,6 +1034,45 @@ const handleUpdateEmail = async () => {
   } finally {
     emailForm.isSubmitting.value = false
   }
+}
+
+// Users handlers
+const handleLoadAllUsers = async () => {
+  try {
+    console.log('🔄 Manual refresh: Starting loadAllUsers...')
+    await loadAllUsers()
+    console.log('✅ Manual refresh: Daftar users berhasil dimuat')
+    console.log('📋 Users data after manual refresh:', users.value)
+  } catch (error) {
+    console.error('❌ Error loading users:', error)
+  }
+}
+
+// Date formatter
+const formatDate = (timestamp) => {
+  if (!timestamp) return '-'
+  try {
+    const date = new Date(timestamp)
+    return date.toLocaleDateString('id-ID', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch (error) {
+    return timestamp
+  }
+}
+
+// Debug admin access
+const debugAdminAccess = () => {
+  console.log('🔍 Debug Admin Access:')
+  console.log('Current User:', currentUser.value)
+  console.log('User Role:', userRole.value)
+  console.log('Is Admin:', isAdmin.value)
+  console.log('Role Value Type:', typeof userRole.value)
+  console.log('Role comparison with ADMIN:', userRole.value === 'ADMIN')
 }
 </script>
 
@@ -1146,6 +1354,13 @@ const handleUpdateEmail = async () => {
   border-bottom: 1px solid #e2e8f0;
 }
 
+.section-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
 .section-header h2 {
   font-size: 1.25rem;
   font-weight: 600;
@@ -1156,6 +1371,104 @@ const handleUpdateEmail = async () => {
 .section-header p {
   color: #64748b;
   margin: 0;
+}
+
+/* Users Grid */
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.users-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.users-loading .spinner {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 1rem;
+}
+
+.user-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.user-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.user-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 1rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.user-avatar {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1d4ed8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.user-role-badge.admin {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.user-role-badge.cashier {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.user-role-badge.user {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.user-card-content {
+  padding: 0 1.5rem 1.5rem;
+}
+
+.user-email {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1rem 0;
+  word-break: break-all;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 /* Empty State */
@@ -1178,6 +1491,8 @@ const handleUpdateEmail = async () => {
   color: #64748b;
   margin-bottom: 2rem;
 }
+
+
 
 /* Profiles Grid */
 .profiles-grid {
@@ -1499,9 +1814,20 @@ const handleUpdateEmail = async () => {
     grid-template-columns: 1fr;
   }
   
+  .users-grid {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+  
   .profiles-grid {
     grid-template-columns: 1fr;
     padding: 1rem;
+  }
+  
+  .section-header-content {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
   }
   
   .modal-content {

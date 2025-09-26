@@ -6,6 +6,78 @@ import { api as apiClient } from '../config/axios.js'
  */
 class ProfileService {
   /**
+   * Get all users with pagination (Admin only)
+   * @param {Object} params - Query parameters
+   * @param {number} params.count - Items per page (default 10, max 100)
+   * @param {number} params.page - Page number (default 1)
+   * @returns {Promise<Object>} All users response
+   */
+  async getAllUsers(params = {}) {
+    try {
+      const queryParams = new URLSearchParams()
+      
+      if (params.count) {
+        queryParams.append('count', params.count)
+      }
+      if (params.page) {
+        queryParams.append('page', params.page)
+      }
+      
+      const queryString = queryParams.toString()
+      const url = queryString ? `/users?${queryString}` : '/users'
+      
+      const response = await apiClient.get(url)
+      
+      if (response.data.MESSAGE === 'SUCCESS' && response.data.STATUS === 'OK') {
+        return {
+          success: true,
+          data: response.data.DATA,
+          message: response.data.MESSAGE || 'Users loaded successfully'
+        }
+      } else {
+        return {
+          success: false,
+          error: response.data.ERROR || 'Failed to load users',
+          status: response.data.STATUS
+        }
+      }
+    } catch (error) {
+      console.error('Get all users error:', error)
+      
+      if (error.response) {
+        const { status, data } = error.response
+        
+        switch (status) {
+          case 401:
+            return {
+              success: false,
+              error: 'Authentication required or insufficient permissions',
+              status: 'UNAUTHORIZED'
+            }
+          case 500:
+            return {
+              success: false,
+              error: data.ERROR || 'Failed to load users',
+              status: 'INTERNAL_SERVER_ERROR'
+            }
+          default:
+            return {
+              success: false,
+              error: 'Failed to load users',
+              status: 'UNKNOWN_ERROR'
+            }
+        }
+      }
+      
+      return {
+        success: false,
+        error: 'Network error or server unavailable: ' + error.message,
+        status: 'NETWORK_ERROR'
+      }
+    }
+  }
+
+  /**
    * Get current user's basic info and their profiles
    * @returns {Promise<Object>} Current user profile response
    */
@@ -55,33 +127,30 @@ class ProfileService {
   }
 
   /**
-   * Create a new user with profile (Admin only)
-   * @param {Object} userData - User and profile data
-   * @param {string} userData.email - Email (required)
-   * @param {string} userData.password - Password (required)
-   * @param {string} userData.role - Role: ADMIN or STAFF (required)
-   * @param {string} userData.name - Name (required)
-   * @param {string} userData.contact - Contact (required)
-   * @param {string} userData.address - Address (required)
-   * @param {string} userData.image_url - Image URL (optional)
-   * @returns {Promise<Object>} Create user response
+   * Create a new profile for current user
+   * @param {Object} profileData - Profile data
+   * @param {string} profileData.name - Name (required)
+   * @param {string} profileData.contact - Contact (required)
+   * @param {string} profileData.address - Address (required)
+   * @param {string} profileData.image_url - Image URL (optional)
+   * @returns {Promise<Object>} Create profile response
    */
-  async createProfile(userData) {
+  async createProfile(profileData) {
     try {
-      console.log('Creating user with data:', userData)
+      console.log('Creating profile with data:', profileData)
       
-      const response = await apiClient.post('/profile', userData)
+      const response = await apiClient.post('/profile', profileData)
       
       if (response.data.STATUS === 'created') {
         return {
           success: true,
           data: response.data.DATA,
-          message: response.data.MESSAGE || 'User created successfully'
+          message: response.data.MESSAGE || 'Profile created successfully'
         }
       } else {
         return {
           success: false,
-          error: response.data.ERROR || 'Failed to create user',
+          error: response.data.ERROR || 'Failed to create profile',
           status: response.data.STATUS
         }
       }
@@ -270,79 +339,7 @@ class ProfileService {
     }
   }
 
-  /**
-   * Create a new user with profile (Admin only)
-   * @param {Object} userData - User and profile data
-   * @param {string} userData.email - Email address (required)
-   * @param {string} userData.password - Password min 6 chars (required)
-   * @param {string} userData.role - User role: admin|cashier (optional, default: cashier)
-   * @param {Object} userData.profile - Profile data (required)
-   * @param {string} userData.profile.name - Name (required)
-   * @param {string} userData.profile.contact - Contact (required)
-   * @param {string} userData.profile.address - Address (required)
-   * @param {string} userData.profile.image_url - Image URL (optional)
-   * @returns {Promise<Object>} Create user response
-   */
-  async createUser(userData) {
-    try {
-      console.log('Creating user with data:', userData)
-      
-      const response = await apiClient.post('/users', userData)
-      
-      if (response.data.STATUS === 'created') {
-        return {
-          success: true,
-          data: response.data.DATA,
-          message: response.data.MESSAGE || 'User created successfully'
-        }
-      } else {
-        return {
-          success: false,
-          error: response.data.ERROR || 'Failed to create user',
-          status: response.data.STATUS
-        }
-      }
-    } catch (error) {
-      console.error('Create user error:', error)
-      
-      if (error.response) {
-        const { status, data } = error.response
-        
-        switch (status) {
-          case 400:
-            return {
-              success: false,
-              error: data.ERROR || 'Invalid user data',
-              status: 'BAD_REQUEST'
-            }
-          case 401:
-            return {
-              success: false,
-              error: 'Admin access required',
-              status: 'UNAUTHORIZED'
-            }
-          case 500:
-            return {
-              success: false,
-              error: data.ERROR || 'Failed to create user',
-              status: 'INTERNAL_SERVER_ERROR'
-            }
-          default:
-            return {
-              success: false,
-              error: 'Failed to create user',
-              status: 'UNKNOWN_ERROR'
-            }
-        }
-      }
-      
-      return {
-        success: false,
-        error: 'Network error or server unavailable: ' + error.message,
-        status: 'NETWORK_ERROR'
-      }
-    }
-  }
+
 
   /**
    * Create a new user with profile (Admin only)
