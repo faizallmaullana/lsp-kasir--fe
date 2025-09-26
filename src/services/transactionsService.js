@@ -47,23 +47,44 @@ class TransactionsService {
 
   /**
    * Get all transactions with items details
+   * Menggunakan endpoint standar /transactions dan kemudian fetch detail per transaction
    * @param {Object} params - Query parameters
    * @returns {Promise<Object>} API response with items
    */
   async getAllWithItems(params = {}) {
     try {
-      const response = await apiClient.get('/transactions/with-items', { params })
+      // Ambil list transactions dulu
+      const response = await apiClient.get('/transactions', { params })
       
       if (response.data.STATUS === 'OK') {
         const transactions = Array.isArray(response.data.DATA) ? response.data.DATA : []
         
+        // Untuk setiap transaction, ambil detail items jika diperlukan
+        const transactionsWithItems = await Promise.all(
+          transactions.map(async (transaction) => {
+            try {
+              const detailResponse = await this.getById(transaction.id_transaction)
+              if (detailResponse.success && detailResponse.data.items) {
+                return {
+                  ...transaction,
+                  items: detailResponse.data.items
+                }
+              }
+              return transaction
+            } catch (error) {
+              console.error(`Failed to fetch items for transaction ${transaction.id_transaction}:`, error)
+              return transaction
+            }
+          })
+        )
+        
         return {
           success: true,
-          data: transactions,
+          data: transactionsWithItems,
           pagination: response.data.pagination || {
             page: 1,
-            count: transactions.length,
-            total: transactions.length,
+            count: transactionsWithItems.length,
+            total: transactionsWithItems.length,
             hasMore: false
           },
           message: response.data.MESSAGE
@@ -71,7 +92,7 @@ class TransactionsService {
       } else {
         return {
           success: false,
-          error: response.data.ERROR || 'Failed to fetch transactions with items',
+          error: response.data.ERROR || 'Failed to fetch transactions',
           status: response.data.STATUS
         }
       }
@@ -148,16 +169,13 @@ class TransactionsService {
   /**
    * Create new transaction
    * @param {Object} transactionData - Transaction data
-   * @param {Array} transactionData.items - Array of items with item_id, quantity, price
-   * @param {number} transactionData.total - Total amount
-   * @param {string} transactionData.payment_method - Payment method (optional)
-   * @param {string} transactionData.customer_name - Customer name (optional)
-   * @param {string} transactionData.notes - Additional notes (optional)
+   * @param {Array} transactionData.items - Array of items with id_item, quantity
+   * @param {string} transactionData.buyer_contact - Buyer contact (optional)
    * @returns {Promise<Object>} Create transaction response
    */
   async create(transactionData) {
     try {
-      // Validate required fields
+      // Validate required fields sesuai API spec
       if (!transactionData.items || !Array.isArray(transactionData.items) || transactionData.items.length === 0) {
         return {
           success: false,
@@ -166,18 +184,31 @@ class TransactionsService {
         }
       }
 
-      if (!transactionData.total || transactionData.total <= 0) {
-        return {
-          success: false,
-          error: 'Total must be greater than 0',
-          status: 'BAD_REQUEST'
+      // Validate items format sesuai API spec
+      for (const item of transactionData.items) {
+        if (!item.id_item) {
+          return {
+            success: false,
+            error: 'Each item must have id_item',
+            status: 'BAD_REQUEST'
+          }
+        }
+        if (!item.quantity || item.quantity < 1) {
+          return {
+            success: false,
+            error: 'Each item must have quantity >= 1',
+            status: 'BAD_REQUEST'
+          }
         }
       }
 
-      // Set defaults
+      // Format data sesuai API spec - server akan hitung total_price
       const data = {
-        payment_method: 'cash',
-        ...transactionData
+        buyer_contact: transactionData.buyer_contact || '',
+        items: transactionData.items.map(item => ({
+          id_item: item.id_item,
+          quantity: item.quantity
+        }))
       }
 
       const response = await apiClient.post('/transactions', data)

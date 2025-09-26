@@ -98,13 +98,17 @@ export const useCart = () => {
   const cartTotal = ref(0)
 
   const addToCart = (item) => {
-    const existingItem = cart.value.find(cartItem => cartItem.id === item.id)
+    const itemId = item.id_item || item.id
+    const existingItem = cart.value.find(cartItem => 
+      (cartItem.id_item || cartItem.id) === itemId
+    )
     
     if (existingItem) {
       existingItem.quantity += 1
     } else {
       cart.value.push({
         ...item,
+        id_item: itemId,
         quantity: 1
       })
     }
@@ -113,12 +117,16 @@ export const useCart = () => {
   }
 
   const removeFromCart = (itemId) => {
-    cart.value = cart.value.filter(item => item.id !== itemId)
+    cart.value = cart.value.filter(item => 
+      (item.id_item || item.id) !== itemId
+    )
     calculateTotal()
   }
 
   const updateQuantity = (itemId, quantity) => {
-    const item = cart.value.find(cartItem => cartItem.id === itemId)
+    const item = cart.value.find(cartItem => 
+      (cartItem.id_item || cartItem.id) === itemId
+    )
     if (item) {
       if (quantity <= 0) {
         removeFromCart(itemId)
@@ -130,7 +138,9 @@ export const useCart = () => {
   }
 
   const incrementQuantity = (itemId) => {
-    const item = cart.value.find(cartItem => cartItem.id === itemId)
+    const item = cart.value.find(cartItem => 
+      (cartItem.id_item || cartItem.id) === itemId
+    )
     if (item) {
       item.quantity += 1
     }
@@ -138,7 +148,9 @@ export const useCart = () => {
   }
 
   const decrementQuantity = (itemId) => {
-    const item = cart.value.find(cartItem => cartItem.id === itemId)
+    const item = cart.value.find(cartItem => 
+      (cartItem.id_item || cartItem.id) === itemId
+    )
     if (item) {
       if (item.quantity > 1) {
         item.quantity -= 1
@@ -156,14 +168,16 @@ export const useCart = () => {
 
   const calculateTotal = () => {
     cartTotal.value = cart.value.reduce((total, item) => {
-      return total + (item.price * item.quantity)
+      const price = item.price || 0
+      const quantity = item.quantity || 0
+      return total + (price * quantity)
     }, 0)
   }
 
   const getCartData = () => {
     return {
       items: cart.value.map(item => ({
-        item_id: item.id,
+        item_id: item.id_item || item.id,
         quantity: item.quantity,
         price: item.price
       })),

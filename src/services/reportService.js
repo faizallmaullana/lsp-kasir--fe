@@ -38,8 +38,8 @@ class ReportService {
 
   /**
    * Get monthly report
-   * @param {string} month - Month in format MM (01-12)
-   * @param {string|number} year - Year in format YYYY
+   * @param {number} month - Month (1-12)
+   * @param {number} year - Year (e.g., 2025)
    * @returns {Promise<Object>} Monthly report data
    */
   async getMonthlyReport(month, year) {
@@ -52,11 +52,16 @@ class ReportService {
         }
       }
 
-      // Ensure month is 2-digit string
-      const formattedMonth = String(month).padStart(2, '0')
-      const params = { month: formattedMonth, year: String(year) }
-      
-      const response = await apiClient.get('/reports/monthly', { params })
+      if (month < 1 || month > 12) {
+        return {
+          success: false,
+          error: 'Month must be between 1 and 12',
+          status: 'BAD_REQUEST'
+        }
+      }
+
+      // Sesuai API spec: /api/reports/:bulan/:tahun
+      const response = await apiClient.get(`/reports/${month}/${year}`)
       
       if (response.data.STATUS === 'OK') {
         return {
@@ -67,12 +72,38 @@ class ReportService {
       } else {
         return {
           success: false,
-          error: response.data.ERROR || 'Failed to fetch monthly report',
+          error: response.data.MESSAGE || 'Failed to fetch monthly report',
           status: response.data.STATUS
         }
       }
     } catch (error) {
       console.error('Backend API error (monthly report):', error.message)
+      
+      if (error.response) {
+        const { status, data } = error.response
+        
+        switch (status) {
+          case 400:
+            return {
+              success: false,
+              error: data.MESSAGE || 'Invalid month/year',
+              status: 'BAD_REQUEST'
+            }
+          case 500:
+            return {
+              success: false,
+              error: data.ERROR || 'Failed to query transactions',
+              status: 'INTERNAL_SERVER_ERROR'
+            }
+          default:
+            return {
+              success: false,
+              error: 'Failed to get monthly report',
+              status: 'UNKNOWN_ERROR'
+            }
+        }
+      }
+      
       return {
         success: false,
         error: 'Cannot connect to backend API: ' + error.message,
@@ -96,8 +127,52 @@ class ReportService {
         }
       }
 
-      const params = { date }
-      const response = await apiClient.get('/reports/date', { params })
+      // Convert YYYY-MM-DD to dd/mm/yyyy format for API
+      let dd, mm, yyyy
+      if (date.includes('-')) {
+        const parts = date.split('-')
+        yyyy = parts[0]
+        mm = parts[1]
+        dd = parts[2]
+      } else {
+        return {
+          success: false,
+          error: 'Invalid date format. Use YYYY-MM-DD',
+          status: 'BAD_REQUEST'
+        }
+      }
+
+      // Validate date components
+      const dayNum = parseInt(dd)
+      const monthNum = parseInt(mm)
+      const yearNum = parseInt(yyyy)
+
+      if (dayNum < 1 || dayNum > 31) {
+        return {
+          success: false,
+          error: 'Day must be between 1 and 31',
+          status: 'BAD_REQUEST'
+        }
+      }
+
+      if (monthNum < 1 || monthNum > 12) {
+        return {
+          success: false,
+          error: 'Month must be between 1 and 12',
+          status: 'BAD_REQUEST'
+        }
+      }
+
+      if (yearNum < 1970) {
+        return {
+          success: false,
+          error: 'Year must be >= 1970',
+          status: 'BAD_REQUEST'
+        }
+      }
+
+      // Sesuai API spec: /api/reports/date/:dd/:mm/:yyyy
+      const response = await apiClient.get(`/reports/date/${dd}/${mm}/${yyyy}`)
       
       if (response.data.STATUS === 'OK') {
         return {
@@ -108,12 +183,38 @@ class ReportService {
       } else {
         return {
           success: false,
-          error: response.data.ERROR || 'Failed to fetch date report',
+          error: response.data.MESSAGE || 'Failed to fetch date report',
           status: response.data.STATUS
         }
       }
     } catch (error) {
       console.error('Backend API error (date report):', error.message)
+      
+      if (error.response) {
+        const { status, data } = error.response
+        
+        switch (status) {
+          case 400:
+            return {
+              success: false,
+              error: data.MESSAGE || 'Invalid dd/mm/yyyy',
+              status: 'BAD_REQUEST'
+            }
+          case 500:
+            return {
+              success: false,
+              error: data.ERROR || 'Failed to query transactions',
+              status: 'INTERNAL_SERVER_ERROR'
+            }
+          default:
+            return {
+              success: false,
+              error: 'Failed to get date report',
+              status: 'UNKNOWN_ERROR'
+            }
+        }
+      }
+      
       return {
         success: false,
         error: 'Cannot connect to backend API: ' + error.message,

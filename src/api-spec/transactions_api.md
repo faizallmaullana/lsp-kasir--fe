@@ -183,9 +183,6 @@ Responses
   "STATUS": "UNAUTHORIZED"
 }
 ```
-
-Security Notes
-- The create endpoint derives `id_user` from the JWT claim `sub`. Ensure the token is provided via `Authorization: Bearer <token>` and the server has a valid `JWT_SECRET`.
 - 500 Internal Server Error
 ```json
 {

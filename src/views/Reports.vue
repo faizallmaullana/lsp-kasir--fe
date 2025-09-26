@@ -109,23 +109,19 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="transaction in todayReport.transactions" :key="transaction.id">
-                  <td class="transaction-id">
-                    #{{ transaction.id }}
+                                <tr v-for="transaction in todayReport.transactions" :key="transaction.id_transaction">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    #{{ transaction.id_transaction }}
                   </td>
-                  <td class="transaction-date">
-                    {{ formatDateTime(transaction.created_at) }}
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ formatDateTime(transaction.timestamp) }}
                   </td>
-                  <td class="transaction-total">
-                    Rp {{ formatCurrency(transaction.total) }}
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    Rp {{ formatCurrency(transaction.total_price) }}
                   </td>
-                  <td class="transaction-items">
-                    <div v-if="transaction.items && transaction.items.length > 0" class="items-list">
-                      <div v-for="item in transaction.items" :key="item.id" class="item-entry">
-                        {{ item.name }} ({{ item.quantity }}x)
-                      </div>
-                    </div>
-                    <span v-else class="no-items">-</span>
+                  <td class="px-6 py-4 text-sm text-gray-500">
+                    <span v-if="transaction.buyer_contact" class="text-xs">{{ transaction.buyer_contact }}</span>
+                    <span v-else class="text-gray-400 text-xs">-</span>
                   </td>
                 </tr>
               </tbody>

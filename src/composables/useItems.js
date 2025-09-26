@@ -134,16 +134,17 @@ export const useItems = () => {
   const itemsByType = computed(() => {
     const grouped = {}
     items.value.forEach(item => {
-      if (!grouped[item.item_type]) {
-        grouped[item.item_type] = []
+      const type = item.item_type || 'uncategorized'
+      if (!grouped[type]) {
+        grouped[type] = []
       }
-      grouped[item.item_type].push(item)
+      grouped[type].push(item)
     })
     return grouped
   })
 
   const itemTypes = computed(() => {
-    const types = new Set(items.value.map(item => item.item_type))
+    const types = new Set(items.value.map(item => item.item_type || 'uncategorized'))
     return Array.from(types).filter(type => type)
   })
 

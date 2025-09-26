@@ -59,87 +59,58 @@ export const useReports = () => {
     }
   }
 
-  // Computed properties for statistics
+  // Computed properties for statistics berdasarkan API spec
   const todayStats = computed(() => {
-    if (!todayReport.value || !todayReport.value.transactions) {
-      return null
-    }
-
-    const transactions = todayReport.value.transactions
-    const totalTransactions = transactions.length
-    const totalRevenue = transactions.reduce((sum, transaction) => {
-      return sum + (transaction.total || 0)
-    }, 0)
+    if (!todayReport.value) return null
     
-    const totalItemsSold = transactions.reduce((sum, transaction) => {
-      if (transaction.items && Array.isArray(transaction.items)) {
-        return sum + transaction.items.reduce((itemSum, item) => {
-          return itemSum + (item.quantity || 0)
-        }, 0)
-      }
-      return sum
-    }, 0)
-
     return {
-      totalTransactions,
-      totalRevenue,
-      totalItemsSold
+      totalTransactions: todayReport.value.total_transactions || 0,
+      totalRevenue: todayReport.value.sum_total_price || 0,
+      totalItemsSold: calculateTotalItemsSold(todayReport.value.transactions || []),
+      date: todayReport.value.date
     }
   })
 
   const monthlyStats = computed(() => {
-    if (!monthlyReport.value || !monthlyReport.value.transactions) {
-      return null
-    }
-
-    const transactions = monthlyReport.value.transactions
-    const totalTransactions = transactions.length
-    const totalRevenue = transactions.reduce((sum, transaction) => {
-      return sum + (transaction.total || 0)
-    }, 0)
+    if (!monthlyReport.value) return null
     
-    const totalItemsSold = transactions.reduce((sum, transaction) => {
-      if (transaction.items && Array.isArray(transaction.items)) {
-        return sum + transaction.items.reduce((itemSum, item) => {
-          return itemSum + (item.quantity || 0)
-        }, 0)
-      }
-      return sum
-    }, 0)
-
     return {
-      totalTransactions,
-      totalRevenue,
-      totalItemsSold
+      totalTransactions: monthlyReport.value.total_transactions || 0,
+      totalRevenue: monthlyReport.value.sum_total_price || 0,
+      totalItemsSold: calculateTotalItemsSold(monthlyReport.value.transactions || []),
+      month: monthlyReport.value.month,
+      year: monthlyReport.value.year
     }
   })
 
   const dailyStats = computed(() => {
-    if (!dailyReport.value || !dailyReport.value.transactions) {
-      return null
-    }
-
-    const transactions = dailyReport.value.transactions
-    const totalTransactions = transactions.length
-    const totalRevenue = transactions.reduce((sum, transaction) => {
-      return sum + (transaction.total || 0)
-    }, 0)
+    if (!dailyReport.value) return null
     
-    const totalItemsSold = transactions.reduce((sum, transaction) => {
-      if (transaction.items && Array.isArray(transaction.items)) {
-        return sum + transaction.items.reduce((itemSum, item) => {
-          return itemSum + (item.quantity || 0)
-        }, 0)
-      }
-      return sum
-    }, 0)
-
     return {
-      totalTransactions,
-      totalRevenue,
-      totalItemsSold
+      totalTransactions: dailyReport.value.total_transactions || 0,
+      totalRevenue: dailyReport.value.sum_total_price || 0,
+      totalItemsSold: calculateTotalItemsSold(dailyReport.value.transactions || []),
+      date: dailyReport.value.date
     }
   })
+
+  // Helper function untuk menghitung total items terjual
+  const calculateTotalItemsSold = (transactions) => {
+    if (!Array.isArray(transactions)) return 0
+    
+    return transactions.reduce((total, transaction) => {
+      // Jika transaction memiliki items detail
+      if (transaction.items && Array.isArray(transaction.items)) {
+        const transactionItems = transaction.items.reduce((sum, item) => {
+          return sum + (item.quantity || 0)
+        }, 0)
+        return total + transactionItems
+      }
+      
+      // Fallback: asumsi 1 item per transaction jika tidak ada detail
+      return total + 1
+    }, 0)
+  }
 
   // Additional computed properties
   const allReports = computed(() => ({

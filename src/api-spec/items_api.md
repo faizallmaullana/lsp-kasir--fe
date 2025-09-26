@@ -26,7 +26,7 @@ Content-Type: application/json
 **Query Parameters:**
 - `count` (optional): Number of items per page (default: 10, max: 100)
 - `page` (optional): Page number (default: 1)
-- `type` (optional): Filter by `item_type` (exact match)
+- `type` (optional): Filter by item_type (exact match)
 
 **Examples:**
 ```
@@ -151,6 +151,7 @@ Authorization: Bearer <your_jwt_token>
 ```json
 {
   "item_name": "New Product",
+  "item_type": "beverage",
   "is_available": true,
   "price": 49.99,
   "description": "A great new product",

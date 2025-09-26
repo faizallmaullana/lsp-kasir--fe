@@ -18,13 +18,14 @@ class ItemsService {
         // Parsing DATA array dari response API backend
         const items = Array.isArray(response.data.DATA) ? response.data.DATA : []
         
-        // Convert is_available to stock_status untuk compatibility dengan UI
-        const processedItems = items.map(item => ({
-          ...item,
-          stock_status: item.is_available ? 'available' : 'unavailable'
-        }))
-        
-        return {
+      // Process items sesuai dengan API spec
+      const processedItems = items.map(item => ({
+        ...item,
+        id: item.id_item, // Alias untuk compatibility dengan UI
+        name: item.item_name // Alias untuk compatibility dengan UI
+      }))
+      
+      return {
           success: true,
           data: processedItems,
           pagination: response.data.pagination || {

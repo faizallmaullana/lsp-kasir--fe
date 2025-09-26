@@ -331,15 +331,13 @@ const {
 } = useTransactions()
 const {
   cart,
-  buyerContact,
   cartTotal,
   cartItemCount,
-  cartTotalFormatted,
   addToCart: addItemToCart,
   removeFromCart: removeItemFromCart,
-  updateCartItemQuantity,
+  updateQuantity: updateCartItemQuantity,
   clearCart: clearAllCart,
-  getTransactionData
+  getCartData
 } = useCart()
 
 // Reactive data
@@ -349,6 +347,7 @@ const showPaymentModal = ref(false)
 const showSuccessModal = ref(false)
 const paidAmount = ref(0)
 const transactionId = ref('')
+const buyerContact = ref('')
 const taxRate = 0 // No tax for now, keep it simple
 
 // Available categories computed from actual items
@@ -507,19 +506,24 @@ const processPayment = async () => {
   try {
     console.log('Processing payment...')
     
-    // Prepare transaction data
-    const transactionData = getTransactionData()
-    transactionData.buyer_contact = buyerContact.value
+    // Prepare transaction data sesuai API spec transactions_api.md
+    const transactionData = {
+      buyer_contact: buyerContact.value || '',
+      items: cart.value.map(item => ({
+        id_item: item.id_item || item.id, // Support both field names
+        quantity: item.quantity
+      }))
+    }
     
     console.log('Transaction data:', transactionData)
     
     // Create transaction via API
-    const success = await createTransaction(transactionData)
+    const result = await createTransaction(transactionData)
     
-    if (success) {
-      console.log('Transaction created successfully')
-      // Generate display transaction ID (or use from response if available)
-      transactionId.value = `TRX${Date.now().toString().slice(-8)}`
+    if (result) {
+      console.log('Transaction created successfully', result)
+      // Use transaction ID from response or generate one
+      transactionId.value = result.id || `TRX${Date.now().toString().slice(-8)}`
       
       // Close payment modal and show success
       showPaymentModal.value = false
