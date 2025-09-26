@@ -103,6 +103,24 @@
               class="top-item-card"
             >
               <div class="item-rank">{{ index + 1 }}</div>
+              
+              <!-- Product Image -->
+              <div class="item-image">
+                <img 
+                  v-if="getImageSrc(item)" 
+                  :src="getImageSrc(item)" 
+                  :alt="getImageAlt(item)"
+                  class="product-image"
+                  @error="handleImageError($event)"
+                  loading="lazy"
+                />
+                <div v-else class="image-placeholder">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </div>
+              </div>
+              
               <div class="item-info">
                 <h4>{{ item.item_name }}</h4>
                 <div class="item-stats">
@@ -175,6 +193,7 @@ import { useRouter } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import { useReports } from '../composables/useReports'
 import { useTransactions } from '../composables/useTransactions'
+import { getImageSrc, getImageAlt, handleImageError } from '../utils/imageUtils'
 
 const router = useRouter()
 
@@ -568,6 +587,33 @@ const logout = () => {
   flex-shrink: 0;
 }
 
+.item-image {
+  width: 3rem;
+  height: 3rem;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.375rem;
+  border: 1px solid #e5e7eb;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+}
+
 .item-info {
   flex: 1;
   min-width: 0;
@@ -762,6 +808,11 @@ const logout = () => {
   .top-item-card {
     flex-direction: column;
     text-align: center;
+  }
+
+  .item-image {
+    width: 4rem;
+    height: 4rem;
   }
 
   .item-info h4 {

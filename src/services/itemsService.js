@@ -118,19 +118,33 @@ class ItemsService {
    * Create new item
    * @param {Object} itemData - Item data
    * @param {string} itemData.item_name - Item name (required)
+   * @param {string} itemData.item_type - Item type (optional)
    * @param {boolean} itemData.is_available - Availability status (optional, default: true)
    * @param {number} itemData.price - Item price (required)
    * @param {string} itemData.description - Item description (optional)
    * @param {string} itemData.image_url - Item image URL (optional)
+   * @param {string} itemData.image_base64 - Base64 image data (optional)
+   * @param {string} itemData.image_type - Image MIME type (optional, required if image_base64 provided)
    * @returns {Promise<Object>} Create item response
    */
   async create(itemData) {
     try {
+      console.log('Creating item with data:', itemData)
+      
       // Validate required fields
       if (!itemData.item_name || !itemData.price) {
         return {
           success: false,
           error: 'Item name and price are required',
+          status: 'BAD_REQUEST'
+        }
+      }
+
+      // Validate image_base64 if provided
+      if (itemData.image_base64 && !itemData.image_type) {
+        return {
+          success: false,
+          error: 'image_type is required when image_base64 is provided',
           status: 'BAD_REQUEST'
         }
       }
@@ -141,8 +155,32 @@ class ItemsService {
         ...itemData
       }
 
+      // Remove empty fields to avoid sending unnecessary data
+      Object.keys(data).forEach(key => {
+        if (data[key] === '' || data[key] === null || data[key] === undefined) {
+          delete data[key]
+        }
+      })
+
+      console.log('=== API PAYLOAD ===')
+      console.log('Sending item data to API:', data)
+      console.log('Payload size breakdown:')
+      Object.keys(data).forEach(key => {
+        if (key === 'image_base64') {
+          console.log(`  ${key}: [${data[key].length} characters base64 data]`)
+        } else {
+          console.log(`  ${key}:`, data[key])
+        }
+      })
+      console.log('==================')
+
       const response = await apiClient.post('/items', data)
       
+      console.log('=== API RESPONSE ===')
+      console.log('Response status:', response.status)
+      console.log('Response data:', response.data)
+      console.log('==================')
+
       if (response.data.STATUS === 'created') {
         return {
           success: true,
@@ -203,10 +241,13 @@ class ItemsService {
    * @param {string} id - Item UUID
    * @param {Object} itemData - Updated item data
    * @param {string} itemData.item_name - Item name (optional)
+   * @param {string} itemData.item_type - Item type (optional)
    * @param {boolean} itemData.is_available - Availability status (optional)
    * @param {number} itemData.price - Item price (optional)
    * @param {string} itemData.description - Item description (optional)
    * @param {string} itemData.image_url - Item image URL (optional)
+   * @param {string} itemData.image_base64 - Base64 image data (optional)
+   * @param {string} itemData.image_type - Image MIME type (optional)
    * @returns {Promise<Object>} Update item response
    */
   async update(id, itemData) {
@@ -219,7 +260,26 @@ class ItemsService {
         }
       }
 
-      const response = await apiClient.put(`/items/${id}`, itemData)
+      // Validate image_base64 if provided
+      if (itemData.image_base64 && !itemData.image_type) {
+        return {
+          success: false,
+          error: 'image_type is required when image_base64 is provided',
+          status: 'BAD_REQUEST'
+        }
+      }
+
+      // Remove empty fields
+      const cleanData = { ...itemData }
+      Object.keys(cleanData).forEach(key => {
+        if (cleanData[key] === '' || cleanData[key] === null || cleanData[key] === undefined) {
+          delete cleanData[key]
+        }
+      })
+
+      console.log(`Updating item ${id} with data:`, cleanData)
+
+      const response = await apiClient.put(`/items/${id}`, cleanData)
       
       if (response.data.STATUS === 'updated') {
         return {

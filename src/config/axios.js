@@ -26,7 +26,16 @@ apiClient.interceptors.request.use(
       console.log('No auth token found in localStorage')
     }
 
-    // Request logging disabled for production
+    // Log request details
+    console.log('🚀 API Request:', {
+      method: config.method?.toUpperCase(),
+      url: config.baseURL + config.url,
+      headers: config.headers,
+      data: config.data ? (config.data.image_base64 ? 
+        { ...config.data, image_base64: `[${config.data.image_base64.length} chars]` } : 
+        config.data
+      ) : undefined
+    })
 
     return config
   },
@@ -36,11 +45,15 @@ apiClient.interceptors.request.use(
   }
 )
 
-// Response interceptor - untuk handle response dan error
+// Response interceptor - untuk menangani response dan error
 apiClient.interceptors.response.use(
   (response) => {
-    // Response logging disabled for production
-
+    // Log successful response
+    console.log('✅ API Response:', {
+      status: response.status,
+      url: response.config.url,
+      data: response.data
+    })
     return response
   },
   (error) => {

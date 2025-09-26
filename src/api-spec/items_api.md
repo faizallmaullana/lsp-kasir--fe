@@ -1,7 +1,7 @@
 # Items API Documentation
 
 ## Overview
-The Items API provides CRUD operations for managing inventory items in the system.
+The Items API provides CRUD operations for managing inventory items in the system. You can attach images using base64; the server saves the file under `storages/images` and stores the generated filename in `image_url`.
 
 ## Base URL
 ```
@@ -143,11 +143,13 @@ Authorization: Bearer <your_jwt_token>
   "is_available": "boolean (optional, default: true)",
   "price": "number (required)",
   "description": "string (optional)",
-  "image_url": "string (optional)"
+  "image_url": "string (optional)",
+  "image_base64": "string (optional)",
+  "image_type": "string (optional, MIME type like image/png when using image_base64)"
 }
 ```
 
-**Example:**
+**Example (URL only):**
 ```json
 {
   "item_name": "New Product",
@@ -155,7 +157,18 @@ Authorization: Bearer <your_jwt_token>
   "is_available": true,
   "price": 49.99,
   "description": "A great new product",
-  "image_url": "https://example.com/new-product.jpg"
+  "image_url": "custom-file-name.jpg"
+}
+```
+
+**Example (Base64):**
+```json
+{
+  "item_name": "New Product",
+  "price": 49.99,
+  "description": "A great new product",
+  "image_base64": "iVBORw0KGgoAAAANSUhEUgAA...",
+  "image_type": "image/png"
 }
 ```
 
@@ -173,7 +186,7 @@ Authorization: Bearer <your_jwt_token>
     "is_available": true,
     "price": 49.99,
     "description": "A great new product",
-    "image_url": "https://example.com/new-product.jpg",
+  "image_url": "<generated-filename>.png",
     "timestamp": "2025-09-26T10:30:00Z",
     "is_deleted": false
   }
@@ -232,7 +245,9 @@ Authorization: Bearer <your_jwt_token>
   "is_available": "boolean (optional)",
   "price": "number (optional)",
   "description": "string (optional)",
-  "image_url": "string (optional)"
+  "image_url": "string (optional)",
+  "image_base64": "string (optional)",
+  "image_type": "string (optional)"
 }
 ```
 
@@ -258,7 +273,7 @@ Authorization: Bearer <your_jwt_token>
     "is_available": true,
     "price": 59.99,
     "description": "Original description",
-    "image_url": "https://example.com/image.jpg",
+  "image_url": "<generated-filename>.png",
     "timestamp": "2025-09-26T10:30:00Z",
     "is_deleted": false
   }
@@ -360,7 +375,7 @@ DELETE /api/items/123e4567-e89b-12d3-a456-426614174000
   "is_available": "boolean",
   "price": "number (decimal)",
   "description": "string",
-  "image_url": "string",
+  "image_url": "string (generated filename or external URL)",
   "timestamp": "string (ISO 8601)",
   "is_deleted": "boolean"
 }
@@ -380,6 +395,10 @@ All endpoints follow a consistent error response format:
 3. Soft delete is implemented - items are not physically removed
 4. UUIDs are automatically generated for new items
 5. Pagination limits are enforced (max 100 items per page)
+
+## Notes
+- When you send `image_base64`, the server writes a file to `storages/images` and sets `image_url` to the generated filename. Use the Images API to download by ID or serve statically from that folder if exposed.
+- If you prefer to manage hosting yourself, set `image_url` to your own public link and omit `image_base64`.
 
 ## Example Usage
 
