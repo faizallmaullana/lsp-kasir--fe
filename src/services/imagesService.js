@@ -417,10 +417,10 @@ class ImagesService {
       return fileName
     }
 
-    // Construct URL to static image file
-    // Assuming images are served from /storages/images/
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
-    return `${baseUrl}/storages/images/${fileName}`
+    // Construct URL using the Images API endpoint
+    // Format: http://localhost:8000/api/images/file/{filename}
+    const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000/api/images'
+    return `${imageBaseUrl}/file/${fileName}`
   }
 }
 

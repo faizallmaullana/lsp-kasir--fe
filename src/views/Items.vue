@@ -98,7 +98,12 @@
           @click="openItemDetail(item)"
         >
           <div class="item-image">
-            <img :src="item.image_url || item.image || 'https://via.placeholder.com/200x150/3b82f6/ffffff?text=No+Image'" :alt="item.item_name || item.name" />
+            <img 
+              :src="getItemImageSrc(item)" 
+              :alt="item.item_name || item.name"
+              @error="handleImageError"
+              loading="lazy"
+            />
             <div class="item-badge" :class="getStatusBadgeClass(item.is_available)">
               {{ getStatusBadgeText(item.is_available) }}
             </div>
@@ -397,6 +402,7 @@ import { useRouter } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import { useItems } from '../composables/useItems.js'
 import { getImageSrc, getImageAlt, handleImageError } from '../utils/imageUtils'
+import imagesService from '../services/imagesService.js'
 
 const router = useRouter()
 
@@ -476,6 +482,121 @@ const displayItems = computed(() => {
   
   return filtered
 })
+
+// Image URL cache for efficient loading
+const imageUrlCache = ref(new Map())
+
+// Function to get image URL from filename or image ID (async version)
+const getItemImageUrl = async (item) => {
+  try {
+    const itemId = item.id_item || item.id
+    
+    // If item has direct image_url, use it with base URL if it's a relative path
+    if (item.image_url) {
+      if (item.image_url.startsWith('http')) {
+        console.log(`🖼️ [Item ${itemId}] Async - Using direct image_url: ${item.image_url}`)
+        return item.image_url
+      }
+      const baseUrl = getBaseUrl()
+      const fullUrl = `${baseUrl}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`
+      console.log(`🖼️ [Item ${itemId}] Async - Constructed URL from image_url: ${fullUrl}`)
+      return fullUrl
+    }
+    
+    // If item has image filename, try to get URL from images service
+    if (item.image) {
+      // Check cache first
+      const cacheKey = item.image
+      if (imageUrlCache.value.has(cacheKey)) {
+        const cachedUrl = imageUrlCache.value.get(cacheKey)
+        console.log(`🖼️ [Item ${itemId}] Async - Using cached URL for ${item.image}: ${cachedUrl}`)
+        return cachedUrl
+      }
+      
+      // Generate image URL using the service (which now uses correct API endpoint)
+      const imageUrl = imagesService.getImageUrl(item.image)
+      
+      // Cache the result
+      imageUrlCache.value.set(cacheKey, imageUrl)
+      
+      console.log(`🖼️ [Item ${itemId}] Async - Generated and cached URL for ${item.image}: ${imageUrl}`)
+      return imageUrl
+    }
+    
+    // If item has image_filename field
+    if (item.image_filename) {
+      const cacheKey = item.image_filename
+      if (imageUrlCache.value.has(cacheKey)) {
+        const cachedUrl = imageUrlCache.value.get(cacheKey)
+        console.log(`🖼️ [Item ${itemId}] Async - Using cached URL for ${item.image_filename}: ${cachedUrl}`)
+        return cachedUrl
+      }
+      
+      const imageUrl = imagesService.getImageUrl(item.image_filename)
+      imageUrlCache.value.set(cacheKey, imageUrl)
+      
+      console.log(`🖼️ [Item ${itemId}] Async - Generated and cached URL for ${item.image_filename}: ${imageUrl}`)
+      return imageUrl
+    }
+    
+    // Default placeholder
+    console.log(`🖼️ [Item ${itemId}] Async - Using default placeholder - no image data found`)
+    return 'https://via.placeholder.com/200x150/3b82f6/ffffff?text=No+Image'
+    
+  } catch (error) {
+    console.error('Failed to get image URL for item:', item.id_item || item.id, error)
+    return 'https://via.placeholder.com/200x150/ff6b6b/ffffff?text=Error'
+  }
+}
+
+// Reactive image URLs for items
+const itemImageUrls = ref(new Map())
+
+// Get image base URL from environment variable
+const getBaseUrl = () => {
+  return import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000/api/images'
+}
+
+// Synchronous function to get image src for template (with caching)
+const getItemImageSrc = (item) => {
+  const itemId = item.id_item || item.id
+  
+  // If item has direct image_url, use it with base URL if it's a relative path
+  if (item.image_url) {
+    if (item.image_url.startsWith('http')) {
+      console.log(`🖼️ [Item ${itemId}] Using direct image_url: ${item.image_url}`)
+      return item.image_url
+    }
+    const baseUrl = getBaseUrl()
+    const fullUrl = `${baseUrl}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`
+    console.log(`🖼️ [Item ${itemId}] Constructed URL from image_url: ${fullUrl}`)
+    return fullUrl
+  }
+  
+  // If item has image filename, construct URL from images service
+  if (item.image) {
+    const imageUrl = imagesService.getImageUrl(item.image)
+    console.log(`🖼️ [Item ${itemId}] Generated URL from image filename (${item.image}): ${imageUrl}`)
+    return imageUrl
+  }
+  
+  // If item has image_filename field
+  if (item.image_filename) {
+    const imageUrl = imagesService.getImageUrl(item.image_filename)
+    console.log(`🖼️ [Item ${itemId}] Generated URL from image_filename (${item.image_filename}): ${imageUrl}`)
+    return imageUrl
+  }
+  
+  // Default placeholder
+  console.log(`🖼️ [Item ${itemId}] Using default placeholder - no image data found`)
+  return 'https://via.placeholder.com/200x150/3b82f6/ffffff?text=No+Image'
+}
+
+// Handle image load errors
+const handleImageLoadError = (event, item) => {
+  console.warn('Failed to load image for item:', item.id_item, event.target.src)
+  event.target.src = 'https://via.placeholder.com/200x150/ff6b6b/ffffff?text=Error'
+}
 
 // Methods
 const formatPrice = (price) => {
@@ -756,8 +877,8 @@ const validateImageFile = (file) => {
 const processSelectedFile = async (file) => {
   console.log('🔄 PROCESSING FILE:', file.name)
   
-  // Validate file
-  const validation = validateImageFile(file)
+  // Validate file using images service
+  const validation = imagesService.validateImageFile(file)
   if (!validation.isValid) {
     console.error('❌ Validation failed:', validation.errors)
     error.value = validation.errors.join(', ')
