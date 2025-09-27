@@ -368,7 +368,7 @@ const imageUrlCache = ref(new Map())
 
 // Get image base URL from environment variable
 const getImageBaseUrl = () => {
-  return import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000/api/images/file'
+  return import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:5000/api/images/file'
 }
 
 // Function to get image src for kasir product display
@@ -398,7 +398,7 @@ const getProductImageSrc = (item) => {
       console.log(`🖼️ [Kasir Item ${itemId}] Using direct HTTP image_url: ${item.image_url}`)
       return item.image_url
     }
-    const baseUrl = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000'
+    const baseUrl = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:5000'
     const fullUrl = `${baseUrl}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`
     console.log(`🖼️ [Kasir Item ${itemId}] Constructed URL from relative image_url: ${fullUrl}`)
     return fullUrl

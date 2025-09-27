@@ -404,17 +404,17 @@ All endpoints follow a consistent error response format:
 
 ### List Items
 ```bash
-curl -X GET "http://localhost:8000/api/items?count=10&page=1"
+curl -X GET "http://localhost:5000/api/items?count=10&page=1"
 ```
 
 ### Get Item
 ```bash
-curl -X GET http://localhost:8000/api/items/123e4567-e89b-12d3-a456-426614174000
+curl -X GET http://localhost:5000/api/items/123e4567-e89b-12d3-a456-426614174000
 ```
 
 ### Create Item
 ```bash
-curl -X POST http://localhost:8000/api/items \
+curl -X POST http://localhost:5000/api/items \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your_jwt_token" \
   -d '{
@@ -426,7 +426,7 @@ curl -X POST http://localhost:8000/api/items \
 
 ### Update Item
 ```bash
-curl -X PUT http://localhost:8000/api/items/123e4567-e89b-12d3-a456-426614174000 \
+curl -X PUT http://localhost:5000/api/items/123e4567-e89b-12d3-a456-426614174000 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your_jwt_token" \
   -d '{
@@ -437,6 +437,6 @@ curl -X PUT http://localhost:8000/api/items/123e4567-e89b-12d3-a456-426614174000
 
 ### Delete Item
 ```bash
-curl -X DELETE http://localhost:8000/api/items/123e4567-e89b-12d3-a456-426614174000 \
+curl -X DELETE http://localhost:5000/api/items/123e4567-e89b-12d3-a456-426614174000 \
   -H "Authorization: Bearer your_jwt_token"
 ```

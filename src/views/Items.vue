@@ -550,7 +550,7 @@ const itemImageUrls = ref(new Map())
 
 // Get image base URL from environment variable
 const getBaseUrl = () => {
-  return import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000/api/images'
+  return import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:5000/api/images'
 }
 
 // Synchronous function to get image src for template (with caching)

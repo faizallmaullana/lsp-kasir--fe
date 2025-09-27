@@ -274,7 +274,7 @@ const featuredProducts = computed(() => {
 // Image handling functions
 const getProductImageSrc = (item) => {
   const itemId = item.id_item || item.id
-  const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000/api/images/file'
+  const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:5000/api/images/file'
   
   console.log(`🖼️ [Kasir Management Item ${itemId}] Processing image for: ${item.item_name}`)
   
@@ -298,7 +298,7 @@ const getProductImageSrc = (item) => {
       console.log(`🖼️ [Kasir Management Item ${itemId}] Using direct HTTP image_url: ${item.image_url}`)
       return item.image_url
     }
-    const baseUrl = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000'
+    const baseUrl = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:5000'
     const fullUrl = `${baseUrl}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`
     console.log(`🖼️ [Kasir Management Item ${itemId}] Constructed URL from relative image_url: ${fullUrl}`)
     return fullUrl
