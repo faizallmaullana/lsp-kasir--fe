@@ -70,6 +70,7 @@
         </RouterLink>
         
         <RouterLink 
+          v-if="isAdmin"
           to="/reports" 
           class="nav-link"
           :class="{ active: $route.path === '/reports' }"
@@ -81,6 +82,7 @@
         </RouterLink>
         
         <RouterLink 
+          v-if="isAdmin"
           to="/profile" 
           class="nav-link"
           :class="{ active: $route.path === '/profile' }"
@@ -100,7 +102,7 @@
                 <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" fill="currentColor"/>
               </svg>
             </div>
-            <span class="user-name">Admin</span>
+            <span class="user-name">{{ user?.email || user?.name || 'User' }}</span>
             <svg class="dropdown-icon" width="16" height="16" viewBox="0 0 20 20" fill="none">
               <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" fill="currentColor"/>
             </svg>
@@ -134,11 +136,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useAuth } from '../composables/useAuth.js'
 
-const { logout: authLogout, user } = useAuth()
+const { logout: authLogout, user, hasRole } = useAuth()
 const showUserMenu = ref(false)
+
+const isAdmin = computed(() => {
+  try {
+    return hasRole('admin')
+  } catch (e) {
+    return false
+  }
+})
 
 const logout = () => {
   showUserMenu.value = false

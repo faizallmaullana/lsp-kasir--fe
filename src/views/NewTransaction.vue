@@ -425,8 +425,6 @@ const availableCategories = computed(() => {
     { value: 'food', label: 'Makanan' },
     { value: 'beverage', label: 'Minuman' },
     { value: 'snack', label: 'Snack' },
-    { value: 'electronics', label: 'Elektronik' },
-    { value: 'clothing', label: 'Pakaian' },
     { value: 'other', label: 'Lainnya' }
   ]
 
@@ -515,8 +513,6 @@ const getItemTypeText = (itemType) => {
     'food': 'Makanan',
     'beverage': 'Minuman',
     'snack': 'Snack',
-    'electronics': 'Elektronik',
-    'clothing': 'Pakaian',
     'other': 'Lainnya'
   }
   return typeMap[itemType] || 'Umum'

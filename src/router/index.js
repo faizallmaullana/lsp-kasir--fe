@@ -86,7 +86,8 @@ const router = createRouter({
       component: Reports,
       meta: {
         requiresAuth: true,
-        title: 'Laporan'
+  title: 'Laporan',
+  requiresRole: 'ADMIN'
       }
     },
     {
@@ -95,7 +96,8 @@ const router = createRouter({
       component: Profile,
       meta: {
         requiresAuth: true,
-        title: 'Profil Saya'
+  title: 'Profil Saya',
+  requiresRole: 'ADMIN'
       }
     }
   ],
@@ -104,11 +106,30 @@ const router = createRouter({
 // Navigation Guards
 router.beforeEach((to, from, next) => {
   const isAuthenticated = authService.isAuthenticated()
-  
+
   // Set document title
   document.title = to.meta.title ? `${to.meta.title} - KasirApp` : 'KasirApp'
-  
-  // Check authentication requirements
+
+  // If route requires a specific role, check role first (allow admin from localStorage)
+  if (to.meta?.requiresRole) {
+    const requiredRole = to.meta.requiresRole
+    if (authService.hasRole(requiredRole)) {
+      // Allow navigation based on stored role (useful for local dev or when user_data exists)
+      next()
+      return
+    } else {
+      // If role not present, fall through to auth check / redirect
+      if (to.meta.requiresAuth && !isAuthenticated) {
+        next('/login')
+        return
+      }
+      // Block access
+      next('/dashboard')
+      return
+    }
+  }
+
+  // Check authentication requirements for routes without role-specific guard
   if (to.meta.requiresAuth && !isAuthenticated) {
     // Redirect to login if route requires auth but user is not authenticated
     next('/login')

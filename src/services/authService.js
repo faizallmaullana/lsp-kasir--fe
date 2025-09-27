@@ -218,8 +218,34 @@ class AuthService {
    * @returns {string|null} User role or null
    */
   getUserRole() {
+    // Prefer the parsed user object from localStorage
     const user = this.getUser()
-    return user ? user.role : null
+    if (user) {
+      // common shape: { role: 'admin' }
+      if (user.role) return user.role
+
+      // alternative: { roles: ['admin'] }
+      if (Array.isArray(user.roles) && user.roles.length > 0) return user.roles[0]
+
+      // nested: { role: { name: 'admin' } }
+      if (user.role && typeof user.role === 'object' && user.role.name) return user.role.name
+    }
+
+    // Fallback: read raw localStorage in case getUser() returned null
+    try {
+      const raw = localStorage.getItem('user_data')
+      if (!raw) return null
+      const parsed = JSON.parse(raw)
+      if (!parsed) return null
+
+      if (parsed.role) return parsed.role
+      if (Array.isArray(parsed.roles) && parsed.roles.length > 0) return parsed.roles[0]
+      if (parsed.role && typeof parsed.role === 'object' && parsed.role.name) return parsed.role.name
+    } catch (e) {
+      // ignore parse errors
+    }
+
+    return null
   }
 
   /**
@@ -229,7 +255,12 @@ class AuthService {
    */
   hasRole(role) {
     const userRole = this.getUserRole()
-    return userRole === role
+    if (!userRole || !role) return false
+    try {
+      return String(userRole).toLowerCase() === String(role).toLowerCase()
+    } catch (e) {
+      return false
+    }
   }
 
   /**

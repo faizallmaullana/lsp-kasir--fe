@@ -24,7 +24,7 @@
         </div>
       </header>
 
-    <main class="dashboard-main">
+  <main class="dashboard-main">
       <div class="dashboard-content">
         <div class="welcome-card">
           <h1>Selamat Datang di Dashboard KasirApp</h1>
@@ -177,7 +177,7 @@
               </div>
               <h3>Laporan</h3>
               <p>Analisis penjualan dan performa bisnis</p>
-              <RouterLink to="/reports" class="action-btn warning">Lihat</RouterLink>
+              <RouterLink v-if="isAdmin" to="/reports" class="action-btn warning">Lihat</RouterLink>
             </div>
           </div>
         </div>
@@ -189,6 +189,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useAuth } from '../composables/useAuth.js'
 import { useRouter } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import { useReports } from '../composables/useReports'
@@ -196,6 +197,10 @@ import { useTransactions } from '../composables/useTransactions'
 import { getImageSrc, getImageAlt, handleImageError } from '../utils/imageUtils'
 
 const router = useRouter()
+
+// Auth
+const { hasRole } = useAuth()
+const isAdmin = computed(() => hasRole('ADMIN'))
 
 // Use composables for data
 const { todayReport, loading: reportsLoading, error: reportsError, loadTodayReport } = useReports()

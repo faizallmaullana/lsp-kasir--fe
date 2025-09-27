@@ -40,8 +40,6 @@
             <option value="makanan">Makanan</option>
             <option value="minuman">Minuman</option>
             <option value="snack">Snack</option>
-            <option value="elektronik">Elektronik</option>
-            <option value="pakaian">Pakaian</option>
           </select>
           <select v-model="localSortBy" class="filter-select">
             <option value="name">Urutkan: Nama</option>
@@ -204,8 +202,6 @@
                 <option value="food">Makanan</option>
                 <option value="beverage">Minuman</option>
                 <option value="snack">Snack</option>
-                <option value="electronics">Elektronik</option>
-                <option value="clothing">Pakaian</option>
                 <option value="other">Lainnya</option>
               </select>
             </div>
@@ -618,8 +614,6 @@ const getItemTypeText = (itemType) => {
     'food': 'Makanan',
     'beverage': 'Minuman',
     'snack': 'Snack',
-    'electronics': 'Elektronik',
-    'clothing': 'Pakaian',
     'other': 'Lainnya'
   }
   return typeMap[itemType] || 'Umum'
