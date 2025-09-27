@@ -108,7 +108,7 @@ router.beforeEach((to, from, next) => {
   const isAuthenticated = authService.isAuthenticated()
 
   // Set document title
-  document.title = to.meta.title ? `${to.meta.title} - KasirApp` : 'KasirApp'
+  document.title = to.meta.title ? `${to.meta.title} - Dapur Bunda Bahagia` : 'Dapur Bunda Bahagia'
 
   // If route requires a specific role, check role first (allow admin from localStorage)
   if (to.meta?.requiresRole) {

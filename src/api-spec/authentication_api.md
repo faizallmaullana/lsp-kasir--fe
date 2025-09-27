@@ -158,7 +158,7 @@ All endpoints follow a consistent error response format:
 
 ### Login Example
 ```bash
-curl -X POST http://localhost:5000/api/auth/login \
+curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@example.com",
@@ -168,7 +168,7 @@ curl -X POST http://localhost:5000/api/auth/login \
 
 ### Refresh Token Example
 ```bash
-curl -X POST http://localhost:5000/api/auth/refresh \
+curl -X POST http://localhost:8000/api/auth/refresh \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```

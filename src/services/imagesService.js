@@ -418,8 +418,8 @@ class ImagesService {
     }
 
     // Construct URL using the Images API endpoint
-    // Format: http://localhost:5000/api/images/file/{filename}
-    const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:5000/api/images'
+    // Format: http://localhost:8000/api/images/file/{filename}
+    const imageBaseUrl = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000/api/images'
     return `${imageBaseUrl}/file/${fileName}`
   }
 }

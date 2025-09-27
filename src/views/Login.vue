@@ -9,7 +9,7 @@
               <path d="M12 14h16v2H12v-2zm0 4h16v2H12v-2zm0 4h10v2H12v-2z" fill="white"/>
             </svg>
           </div>
-          <h1>KasirApp</h1>
+          <h1>Dapur Bunda Bahagia</h1>
         </div>
         <p class="subtitle">Sistem Kasir Modern & Mudah</p>
       </div>

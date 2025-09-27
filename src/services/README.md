@@ -159,8 +159,8 @@ if (authService.isAuthenticated()) {
 
 File `.env`:
 ```
-VITE_API_BASE_URL=http://localhost:5000/api
-VITE_APP_TITLE=KasirApp
+VITE_API_BASE_URL=http://localhost:8000/api
+VITE_APP_TITLE=Dapur Bunda Bahagia
 VITE_APP_VERSION=1.0.0
 VITE_APP_ENV=development
 VITE_DEBUG=true

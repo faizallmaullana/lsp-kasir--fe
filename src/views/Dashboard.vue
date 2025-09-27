@@ -27,7 +27,7 @@
   <main class="dashboard-main">
       <div class="dashboard-content">
         <div class="welcome-card">
-          <h1>Selamat Datang di Dashboard KasirApp</h1>
+          <h1>Selamat Datang di Dashboard Dapur Bunda Bahagia</h1>
           <p>Sistem kasir modern untuk bisnis Anda</p>
         </div>
 

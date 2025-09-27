@@ -9,7 +9,7 @@
               <path d="M12 14h16v2H12v-2zm0 4h16v2H12v-2zm0 4h10v2H12v-2z" fill="white"/>
             </svg>
           </div>
-          <span>KasirApp</span>
+          <span>Dapur Bunda Bahagia</span>
         </RouterLink>
       </div>
       

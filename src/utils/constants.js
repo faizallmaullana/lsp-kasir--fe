@@ -269,12 +269,12 @@ export const FEATURES = {
 
 // Application Settings
 export const APP_SETTINGS = {
-  NAME: 'KasirApp',
+  NAME: 'Dapur Bunda Bahagia',
   VERSION: '1.0.0',
   AUTHOR: 'Developer Team',
   DESCRIPTION: 'Sistem Kasir Modern untuk Bisnis',
-  COPYRIGHT: '© 2024 KasirApp. All rights reserved.',
-  SUPPORT_EMAIL: 'support@kasirapp.com'
+  COPYRIGHT: '© 2024 Dapur Bunda Bahagia. All rights reserved.',
+  SUPPORT_EMAIL: 'support@Dapur Bunda Bahagia.com'
 }
 
 // Notification Types

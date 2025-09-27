@@ -346,17 +346,17 @@ Transaction Item (Pivot)
 
 List Transactions
 ```bash
-curl -X GET "http://localhost:5000/api/transactions?count=10&page=1"
+curl -X GET "http://localhost:8000/api/transactions?count=10&page=1"
 ```
 
 Get Transaction with Items
 ```bash
-curl -X GET http://localhost:5000/api/transactions/123e4567-e89b-12d3-a456-426614174000
+curl -X GET http://localhost:8000/api/transactions/123e4567-e89b-12d3-a456-426614174000
 ```
 
 Create Transaction
 ```bash
-curl -X POST http://localhost:5000/api/transactions \
+curl -X POST http://localhost:8000/api/transactions \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your_jwt_token>" \
   -d '{
@@ -370,7 +370,7 @@ curl -X POST http://localhost:5000/api/transactions \
 
 Update Transaction
 ```bash
-curl -X PUT http://localhost:5000/api/transactions/123e4567-e89b-12d3-a456-426614174000 \
+curl -X PUT http://localhost:8000/api/transactions/123e4567-e89b-12d3-a456-426614174000 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <your_jwt_token>" \
   -d '{
@@ -380,6 +380,6 @@ curl -X PUT http://localhost:5000/api/transactions/123e4567-e89b-12d3-a456-42661
 
 Delete Transaction
 ```bash
-curl -X DELETE http://localhost:5000/api/transactions/123e4567-e89b-12d3-a456-426614174000 \
+curl -X DELETE http://localhost:8000/api/transactions/123e4567-e89b-12d3-a456-426614174000 \
   -H "Authorization: Bearer <your_jwt_token>"
 ```

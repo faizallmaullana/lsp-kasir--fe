@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Base URL untuk API - bisa diubah sesuai environment
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 
 // Membuat instance axios dengan konfigurasi default
 const apiClient = axios.create({
