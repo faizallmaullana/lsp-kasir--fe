@@ -58,9 +58,9 @@
             >
               <div class="product-image">
                 <img 
-                  :src="getProductImageSrc(item)" 
-                  :alt="item.item_name"
-                  @error="handleKasirImageError($event, item)"
+                  :src="getImageSrc(item)" 
+                  :alt="getImageAlt(item)"
+                  @error="handleImageError($event)"
                   loading="lazy"
                 />
                 <div v-if="!item.is_available" class="out-of-stock-badge">
@@ -107,9 +107,9 @@
               >
                 <div class="cart-item-image">
                   <img 
-                    :src="getProductImageSrc(item)" 
-                    :alt="item.item_name"
-                    @error="handleKasirImageError($event, item)"
+                    :src="getImageSrc(item)" 
+                    :alt="getImageAlt(item)"
+                    @error="handleImageError($event)"
                     loading="lazy"
                   />
                 </div>
@@ -334,6 +334,7 @@ import AppLayout from '../components/AppLayout.vue'
 import { useCart, useTransactions } from '../composables/useTransactions.js'
 import { useItems } from '../composables/useItems.js'
 import imagesService from '../services/imagesService.js'
+import { getImageSrc, getImageAlt, handleImageError } from '../utils/imageUtils.js'
 
 const router = useRouter()
 
@@ -368,47 +369,7 @@ const imageUrlCache = ref(new Map())
 
 // Get image base URL from environment variable
 const getImageBaseUrl = () => {
-  return import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000/api/images/file'
-}
-
-// Function to get image src for kasir product display
-const getProductImageSrc = (item) => {
-  const itemId = item.id_item || item.id
-  const imageBaseUrl = getImageBaseUrl()
-  
-  console.log(`🖼️ [Kasir Item ${itemId}] Processing image for: ${item.item_name}`)
-  
-  // Priority 1: Check for image filename field (UUID filename)
-  if (item.image) {
-    const fullImageUrl = `${imageBaseUrl}/${item.image}`
-    console.log(`🖼️ [Kasir Item ${itemId}] Using image field (${item.image}): ${fullImageUrl}`)
-    return fullImageUrl
-  }
-  
-  // Priority 2: Check for image_filename field (UUID filename)
-  if (item.image_filename) {
-    const fullImageUrl = `${imageBaseUrl}/${item.image_filename}`
-    console.log(`🖼️ [Kasir Item ${itemId}] Using image_filename field (${item.image_filename}): ${fullImageUrl}`)
-    return fullImageUrl
-  }
-  
-  // Priority 3: If item has direct image_url, use it with base URL if it's a relative path
-  if (item.image_url) {
-    if (item.image_url.startsWith('http')) {
-      console.log(`🖼️ [Kasir Item ${itemId}] Using direct HTTP image_url: ${item.image_url}`)
-      return item.image_url
-    }
-    const baseUrl = import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000'
-    const fullUrl = `${baseUrl}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`
-    console.log(`🖼️ [Kasir Item ${itemId}] Constructed URL from relative image_url: ${fullUrl}`)
-    return fullUrl
-  }
-  
-  // Fallback: Generate URL from item name (for testing - should not be used in production)
-  console.warn(`🖼️ [Kasir Item ${itemId}] No image filename found for: ${item.item_name}`)
-  const fallbackUrl = 'https://via.placeholder.com/150x120/3b82f6/ffffff?text=' + encodeURIComponent(item.item_name?.substring(0, 10) || 'No+Image')
-  console.log(`🖼️ [Kasir Item ${itemId}] Using fallback placeholder: ${fallbackUrl}`)
-  return fallbackUrl
+  return import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000/api/images'
 }
 
 // Handle image load errors in kasir
