@@ -1,12 +1,39 @@
 /**
  * Image Utilities
- * Handles image URLs, base64 data, and fallbacks based on API specification
+   // Primary: Check if item has image URL (this is the main field from API)
+  if (item.image_url) {
+    // If it's already a full URL, return it directly
+    if (item.image_url.startsWith('http')) {
+      return item.image_url
+    }
+    
+    // If it already contains the file path, extract just the filename
+    if (item.image_url.includes('/file/')) {
+      const filename = item.image_url.split('/file/')[1]
+      const imageUrl = `${IMAGE_BASE_URL}/file/${filename}`
+      console.log('Constructed API image URL from file path:', imageUrl)
+      return imageUrl
+    }
+    
+    // If it starts with 'file/', extract the filename
+    if (item.image_url.startsWith('file/')) {
+      const filename = item.image_url.substring(5) // Remove 'file/' prefix
+      const imageUrl = `${IMAGE_BASE_URL}/file/${filename}`
+      console.log('Constructed API image URL from file/ prefix:', imageUrl)
+      return imageUrl
+    }
+    
+    // Otherwise, treat it as just the filename
+    const imageUrl = `${IMAGE_BASE_URL}/file/${item.image_url}`
+    console.log('Constructed API image URL from filename:', imageUrl)
+    return imageUrl
+  }ge URLs, base64 data, and fallbacks based on API specification
  */
 
 // Get image base URL from environment
 const IMAGE_BASE_URL = import.meta.env.VITE_IMAGE_BASE_URL || 
-                      import.meta.env.VITE_API_BASE_URL?.replace('/api', '') || 
-                      'http://localhost:8000'
+                      import.meta.env.VITE_API_BASE_URL?.replace('/api', '') + '/api/images' || 
+                      'http://localhost:8000/api/images'
 
 /**
  * Get image source URL from item data
@@ -24,15 +51,21 @@ export const getImageSrc = (item) => {
   
   // Primary: Check if item has image URL (this is the main field from API)
   if (item.image_url) {
-    // If it's a full URL, use it directly
+    // If it's already a full URL, use it directly
     if (item.image_url.startsWith('http')) {
       return item.image_url
     }
     
-    // If it's a generated filename from server storage
-    // According to API spec: server saves to storages/images and stores filename in image_url
-    const imageUrl = `${IMAGE_BASE_URL}/storage/images/${item.image_url}`
-    console.log('Constructed storage image URL:', imageUrl)
+    // If image_url already starts with 'file/', use it directly
+    if (item.image_url.startsWith('file/')) {
+      const imageUrl = `${IMAGE_BASE_URL}/${item.image_url}`
+      console.log('Constructed API image URL from file/ prefixed:', imageUrl)
+      return imageUrl
+    }
+    
+    // Otherwise, treat it as just the filename and add file/ prefix
+    const imageUrl = `${IMAGE_BASE_URL}/file/${item.image_url}`
+    console.log('Constructed API image URL from filename:', imageUrl)
     return imageUrl
   }
   

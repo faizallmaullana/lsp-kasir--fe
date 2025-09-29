@@ -10,7 +10,7 @@
           Kembali
         </button>
         <div class="header-actions">
-          <button class="btn-secondary" @click="editMode = !editMode">
+          <button class="btn-secondary" @click="toggleEditMode">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" stroke="currentColor" stroke-width="2"/>
             </svg>
@@ -32,9 +32,9 @@
         <!-- Image Section -->
         <div class="image-section">
           <div class="main-image">
-            <img :src="currentImage" :alt="item.name" />
-            <div class="image-badge" :class="getStockBadgeClass(item.stock)">
-              {{ getStockBadgeText(item.stock) }}
+            <img :src="currentImage" :alt="getImageAlt(item)" />
+            <div class="image-badge" :class="getStockBadgeClass(item.is_available)">
+              {{ getStockBadgeText(item.is_available) }}
             </div>
           </div>
           <div class="image-thumbnails" v-if="item.images && item.images.length > 1">
@@ -45,7 +45,7 @@
               :class="{ active: currentImageIndex === index }"
               @click="selectImage(index)"
             >
-              <img :src="image" :alt="`${item.name} ${index + 1}`" />
+              <img :src="getImageSrc({ image_url: image }) || image" :alt="`${getImageAlt(item)} ${index + 1}`" />
             </button>
           </div>
         </div>
@@ -54,12 +54,12 @@
         <div class="info-section">
           <div class="item-header">
             <div v-if="!editMode">
-              <h1>{{ item.name }}</h1>
-              <span class="item-category">{{ item.category }}</span>
+              <h1>{{ item.item_name || item.name }}</h1>
+              <span class="item-category">{{ item.item_type || item.category }}</span>
             </div>
             <div v-else class="edit-header">
-              <input v-model="editData.name" class="edit-title" placeholder="Nama produk" />
-              <select v-model="editData.category" class="edit-category">
+              <input v-model="editData.item_name" class="edit-title" placeholder="Nama produk" />
+              <select v-model="editData.item_type" class="edit-category">
                 <option value="makanan">Makanan</option>
                 <option value="minuman">Minuman</option>
                 <option value="snack">Snack</option>
@@ -103,41 +103,25 @@
             <div class="specs-grid">
               <div class="spec-item">
                 <span class="spec-label">Kode Produk</span>
-                <span class="spec-value">{{ item.code || `PRD${item.id.toString().padStart(4, '0')}` }}</span>
+                <span class="spec-value">{{ item.id_item || item.code || `PRD${item.id?.toString().padStart(4, '0') || '0000'}` }}</span>
               </div>
               <div class="spec-item">
                 <span class="spec-label">Kategori</span>
-                <span class="spec-value">{{ item.category }}</span>
-              </div>
-              <div class="spec-item">
-                <span class="spec-label">Stok Tersedia</span>
-                <div v-if="!editMode">
-                  <span class="spec-value" :class="{ 'low-stock': item.stock <= 10 }">
-                    {{ item.stock }} unit
-                  </span>
-                </div>
-                <div v-else>
-                  <input 
-                    type="number" 
-                    v-model="editData.stock" 
-                    class="stock-input"
-                    min="0"
-                  />
-                </div>
+                <span class="spec-value">{{ item.item_type || item.category }}</span>
               </div>
               <div class="spec-item">
                 <span class="spec-label">Status</span>
-                <span class="status-badge" :class="getStatusClass(item.stock)">
-                  {{ getStatusText(item.stock) }}
+                <span class="status-badge" :class="getStatusClass(item.is_available)">
+                  {{ getStatusText(item.is_available) }}
                 </span>
               </div>
               <div class="spec-item">
                 <span class="spec-label">Ditambahkan</span>
-                <span class="spec-value">{{ formatDate(item.createdAt) }}</span>
+                <span class="spec-value">{{ formatDate(item.created_at) }}</span>
               </div>
               <div class="spec-item">
                 <span class="spec-label">Terakhir Update</span>
-                <span class="spec-value">{{ formatDate(item.updatedAt) }}</span>
+                <span class="spec-value">{{ formatDate(item.updated_at) }}</span>
               </div>
             </div>
           </div>
@@ -222,64 +206,40 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
+import { useItems } from '../composables/useItems.js'
+import { getImageSrc, getImageAlt } from '../utils/imageUtils.js'
 
 const route = useRoute()
 const router = useRouter()
 
+// Use the items composable
+const { 
+  loading, 
+  error, 
+  items, 
+  loadItems,
+  updateItem, 
+  deleteItem: deleteItemFromService,
+  clearError 
+} = useItems()
+
 // Reactive data
 const item = ref(null)
-const error = ref(false)
 const editMode = ref(false)
 const currentImageIndex = ref(0)
 
 const editData = ref({
-  name: '',
-  category: '',
+  item_name: '',
+  item_type: '',
   price: 0,
   description: '',
-  stock: 0
+  is_available: true
 })
-
-// Sample data - nanti bisa diganti dengan data dari API
-const sampleItems = [
-  {
-    id: 1,
-    name: 'Nasi Gudeg',
-    description: 'Nasi gudeg khas Yogyakarta dengan ayam dan telur. Disajikan dengan kuah gudeg yang kental dan manis, dilengkapi dengan ayam opor, telur pindang, dan kerupuk. Cita rasa autentik Yogyakarta yang tak terlupakan.',
-    price: 25000,
-    stock: 45,
-    category: 'makanan',
-    code: 'PRD0001',
-    images: [
-      'https://via.placeholder.com/600x400/3b82f6/ffffff?text=Nasi+Gudeg+1',
-      'https://via.placeholder.com/600x400/1d4ed8/ffffff?text=Nasi+Gudeg+2',
-      'https://via.placeholder.com/600x400/2563eb/ffffff?text=Nasi+Gudeg+3'
-    ],
-    totalSold: 245,
-    createdAt: '2024-01-15T08:00:00Z',
-    updatedAt: '2024-09-20T14:30:00Z'
-  },
-  {
-    id: 2,
-    name: 'Es Teh Manis',
-    description: 'Minuman teh manis segar dengan es batu. Dibuat dari teh pilihan berkualitas tinggi dengan gula aren asli. Sangat cocok untuk menemani makanan atau dinikmati saat cuaca panas.',
-    price: 5000,
-    stock: 8,
-    category: 'minuman',
-    code: 'PRD0002',
-    images: [
-      'https://via.placeholder.com/600x400/10b981/ffffff?text=Es+Teh+1'
-    ],
-    totalSold: 189,
-    createdAt: '2024-02-01T10:00:00Z',
-    updatedAt: '2024-09-22T16:15:00Z'
-  }
-]
 
 // Computed properties
 const currentImage = computed(() => {
-  if (!item.value?.images?.length) return item.value?.image || ''
-  return item.value.images[currentImageIndex.value]
+  const imageUrl = getImageSrc(item.value)
+  return imageUrl || 'https://via.placeholder.com/600x400/64748b/ffffff?text=No+Image'
 })
 
 // Methods
@@ -288,6 +248,7 @@ const formatPrice = (price) => {
 }
 
 const formatDate = (dateString) => {
+  if (!dateString) return 'Tidak tersedia'
   return new Intl.DateTimeFormat('id-ID', {
     year: 'numeric',
     month: 'long',
@@ -297,45 +258,45 @@ const formatDate = (dateString) => {
   }).format(new Date(dateString))
 }
 
-const getStockBadgeClass = (stock) => {
-  if (stock <= 5) return 'badge-danger'
-  if (stock <= 10) return 'badge-warning'
-  return 'badge-success'
+const getStockBadgeClass = (isAvailable) => {
+  return isAvailable ? 'badge-success' : 'badge-danger'
 }
 
-const getStockBadgeText = (stock) => {
-  if (stock <= 5) return 'Stok Habis'
-  if (stock <= 10) return 'Stok Menipis'
-  return 'Stok Tersedia'
+const getStockBadgeText = (isAvailable) => {
+  return isAvailable ? 'Tersedia' : 'Tidak Tersedia'
 }
 
-const getStatusClass = (stock) => {
-  if (stock <= 0) return 'status-danger'
-  if (stock <= 10) return 'status-warning'
-  return 'status-success'
+const getStatusClass = (isAvailable) => {
+  return isAvailable ? 'status-success' : 'status-danger'
 }
 
-const getStatusText = (stock) => {
-  if (stock <= 0) return 'Habis'
-  if (stock <= 10) return 'Menipis'
-  return 'Tersedia'
-}
-
-const selectImage = (index) => {
-  currentImageIndex.value = index
+const getStatusText = (isAvailable) => {
+  return isAvailable ? 'Tersedia' : 'Tidak Tersedia'
 }
 
 const goBack = () => {
   router.push('/items')
 }
 
+const toggleEditMode = () => {
+  if (!editMode.value) {
+    // Entering edit mode - populate form with current data
+    startEdit()
+  } else {
+    // Exiting edit mode - cancel changes
+    cancelEdit()
+  }
+}
+
 const startEdit = () => {
+  if (!item.value) return
+  
   editData.value = {
-    name: item.value.name,
-    category: item.value.category,
-    price: item.value.price,
-    description: item.value.description,
-    stock: item.value.stock
+    item_name: item.value.item_name || item.value.name || '',
+    item_type: item.value.item_type || '',
+    price: item.value.price || 0,
+    description: item.value.description || '',
+    is_available: item.value.is_available !== false
   }
   editMode.value = true
 }
@@ -343,53 +304,105 @@ const startEdit = () => {
 const cancelEdit = () => {
   editMode.value = false
   editData.value = {
-    name: '',
-    category: '',
+    item_name: '',
+    item_type: '',
     price: 0,
     description: '',
-    stock: 0
+    is_available: true
   }
 }
 
-const saveChanges = () => {
-  // Update item with edit data
-  Object.assign(item.value, editData.value)
-  item.value.updatedAt = new Date().toISOString()
-  editMode.value = false
+const saveChanges = async () => {
+  if (!item.value) return
   
-  // TODO: Send to API
-  console.log('Saving changes:', editData.value)
-  alert('Perubahan berhasil disimpan!')
+  try {
+    const itemId = item.value.id_item || item.value.id
+    // Convert editData to the format expected by updateItem
+    const updateData = {
+      name: editData.value.item_name,
+      price: editData.value.price,
+      item_type: editData.value.item_type,
+      is_available: editData.value.is_available,
+      description: editData.value.description
+    }
+    
+    const success = await updateItem(itemId, updateData)
+    
+    if (success) {
+      // Update local item data
+      Object.assign(item.value, editData.value)
+      editMode.value = false
+      alert('Perubahan berhasil disimpan!')
+    } else {
+      alert('Gagal menyimpan perubahan: ' + error.value)
+    }
+  } catch (err) {
+    console.error('Error saving changes:', err)
+    alert('Terjadi kesalahan saat menyimpan perubahan')
+  }
 }
 
-const deleteItem = () => {
+const deleteItem = async () => {
+  if (!item.value) return
+  
   if (confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
-    // TODO: Delete from API
-    console.log('Deleting item:', item.value.id)
-    router.push('/items')
+    try {
+      const itemId = item.value.id_item || item.value.id
+      const success = await deleteItemFromService(itemId)
+      
+      if (success) {
+        alert('Produk berhasil dihapus!')
+        router.push('/items')
+      } else {
+        alert('Gagal menghapus produk: ' + error.value)
+      }
+    } catch (err) {
+      console.error('Error deleting item:', err)
+      alert('Terjadi kesalahan saat menghapus produk')
+    }
   }
 }
 
-const loadItem = () => {
-  const itemId = parseInt(route.params.id)
+const loadItem = async () => {
+  const itemId = route.params.id
   
-  // Simulate API call
-  setTimeout(() => {
-    const foundItem = sampleItems.find(i => i.id === itemId)
+  if (!itemId) {
+    error.value = true
+    return
+  }
+  
+  try {
+    // Find item from the items list (assuming it's already loaded)
+    // If not found, we might need to load all items first
+    const foundItem = items.value.find(item => 
+      (item.id_item || item.id) === itemId || 
+      item.id === parseInt(itemId)
+    )
+    
     if (foundItem) {
       item.value = foundItem
-      // Set default image if no images array
-      if (!foundItem.images) {
-        item.value.images = [foundItem.image || 'https://via.placeholder.com/600x400/64748b/ffffff?text=No+Image']
-      }
     } else {
-      error.value = true
+      // If item not found in current list, try to load all items
+      await loadItems()
+      const foundAfterLoad = items.value.find(item => 
+        (item.id_item || item.id) === itemId || 
+        item.id === parseInt(itemId)
+      )
+      
+      if (foundAfterLoad) {
+        item.value = foundAfterLoad
+      } else {
+        error.value = true
+      }
     }
-  }, 500)
+  } catch (err) {
+    console.error('Error loading item:', err)
+    error.value = true
+  }
 }
 
-onMounted(() => {
-  loadItem()
+onMounted(async () => {
+  await loadItem()
 })
 </script>
 

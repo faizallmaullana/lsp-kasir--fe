@@ -4,6 +4,7 @@ import profileService from '../services/profileService.js'
 // Global state
 const currentUser = ref(null)
 const profiles = ref([])
+const users = ref([])
 const loading = ref(false)
 const error = ref(null)
 const loadingProfileId = ref(null)
@@ -142,6 +143,40 @@ export function useProfile() {
     }
   }
 
+
+
+    // Load all users (for all users)
+  const loadAllUsers = async (params = {}) => {
+    loading.value = true
+    error.value = null
+    try {
+      console.log('🔄 useProfile.loadAllUsers: Starting API request...')
+      console.log('📤 useProfile.loadAllUsers: Calling profileService.getAllUsers with params:', params)
+      
+      const response = await profileService.getAllUsers(params)
+      console.log('📥 useProfile.loadAllUsers: API response received:', response)
+      
+      if (response.success) {
+        // Store users data according to API spec
+        users.value = response.data || []
+        console.log('✅ useProfile.loadAllUsers: Success! Users stored:', users.value)
+        console.log('📊 useProfile.loadAllUsers: Total users count:', users.value.length)
+        return true
+      } else {
+        error.value = response.error || 'Gagal memuat data users'
+        console.error('❌ useProfile.loadAllUsers: Failed:', response.error)
+        return false
+      }
+    } catch (err) {
+      error.value = err.message || 'Gagal memuat data users'
+      console.error('💥 useProfile.loadAllUsers: Error:', err)
+      return false
+    } finally {
+      loading.value = false
+      console.log('🏁 useProfile.loadAllUsers: Complete')
+    }
+  }
+
   // Create new user with profile (Admin only)
   const createUser = async (userData) => {
     loading.value = true
@@ -153,6 +188,8 @@ export function useProfile() {
       console.log('useProfile createUser response:', response)
       
       if (response.success) {
+        // Refresh users list after creating new user
+        await loadAllUsers()
         return true
       } else {
         error.value = response.error || 'Gagal membuat user'
@@ -195,6 +232,7 @@ export function useProfile() {
   const resetState = () => {
     currentUser.value = null
     profiles.value = []
+    users.value = []
     error.value = null
     loading.value = false
     loadingProfileId.value = null
@@ -203,6 +241,8 @@ export function useProfile() {
   // Computed properties
   const totalProfiles = computed(() => profiles.value.length)
   const hasProfiles = computed(() => profiles.value.length > 0)
+  const totalUsers = computed(() => users.value.length)
+  const hasUsers = computed(() => users.value.length > 0)
   const userRole = computed(() => currentUser.value?.role || 'USER')
   const userEmail = computed(() => currentUser.value?.email || '')
   const isAdmin = computed(() => userRole.value === 'ADMIN')
@@ -213,6 +253,7 @@ export function useProfile() {
     // State
     currentUser: computed(() => currentUser.value),
     profiles: computed(() => profiles.value),
+    users: computed(() => users.value),
     loading: computed(() => loading.value),
     error: computed(() => error.value),
     loadingProfileId: computed(() => loadingProfileId.value),
@@ -220,6 +261,8 @@ export function useProfile() {
     // Computed
     totalProfiles,
     hasProfiles,
+    totalUsers,
+    hasUsers,
     userRole,
     userEmail,
     isAdmin,
@@ -227,6 +270,7 @@ export function useProfile() {
     
     // Methods
     loadCurrentUser,
+    loadAllUsers,
     createProfile,
     updateProfile,
     deleteProfile,

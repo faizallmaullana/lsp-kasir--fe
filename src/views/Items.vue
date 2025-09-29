@@ -97,7 +97,7 @@
         >
           <div class="item-image">
             <img 
-              :src="getItemImageSrc(item)" 
+              :src="getImageSrc(item)" 
               :alt="item.item_name || item.name"
               @error="handleImageError"
               loading="lazy"
@@ -551,41 +551,6 @@ const itemImageUrls = ref(new Map())
 // Get image base URL from environment variable
 const getBaseUrl = () => {
   return import.meta.env.VITE_IMAGE_BASE_URL || 'http://localhost:8000/api/images'
-}
-
-// Synchronous function to get image src for template (with caching)
-const getItemImageSrc = (item) => {
-  const itemId = item.id_item || item.id
-  
-  // If item has direct image_url, use it with base URL if it's a relative path
-  if (item.image_url) {
-    if (item.image_url.startsWith('http')) {
-      console.log(`🖼️ [Item ${itemId}] Using direct image_url: ${item.image_url}`)
-      return item.image_url
-    }
-    const baseUrl = getBaseUrl()
-    const fullUrl = `${baseUrl}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`
-    console.log(`🖼️ [Item ${itemId}] Constructed URL from image_url: ${fullUrl}`)
-    return fullUrl
-  }
-  
-  // If item has image filename, construct URL from images service
-  if (item.image) {
-    const imageUrl = imagesService.getImageUrl(item.image)
-    console.log(`🖼️ [Item ${itemId}] Generated URL from image filename (${item.image}): ${imageUrl}`)
-    return imageUrl
-  }
-  
-  // If item has image_filename field
-  if (item.image_filename) {
-    const imageUrl = imagesService.getImageUrl(item.image_filename)
-    console.log(`🖼️ [Item ${itemId}] Generated URL from image_filename (${item.image_filename}): ${imageUrl}`)
-    return imageUrl
-  }
-  
-  // Default placeholder
-  console.log(`🖼️ [Item ${itemId}] Using default placeholder - no image data found`)
-  return 'https://via.placeholder.com/200x150/3b82f6/ffffff?text=No+Image'
 }
 
 // Handle image load errors
